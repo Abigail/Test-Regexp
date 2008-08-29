@@ -1,0 +1,10 @@
+use 5.010;
+use ExtUtils::MakeMaker;
+WriteMakefile(
+    NAME              => 'Test::Regexp',
+    VERSION_FROM      => 'lib/Test/Regexp.pm',
+    PREREQ_PM         => {
+        Test::More    =>  0,
+    },
+    AUTHOR            => 'Abigail <abigail@abigail.be>',
+);
