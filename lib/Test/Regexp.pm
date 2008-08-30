@@ -11,6 +11,10 @@ use Exporter ();
 our @EXPORT  = qw [match no_match r_string lorem v_diag];
 our @ISA     = qw [Exporter];
 
+sub substitute;
+sub lorem;
+sub r_string;
+
 our $VERSION = '0.01';
 
 BEGIN {
@@ -53,141 +57,207 @@ sub pretty {
 }
 
 
+#
+# Arguments:
+#   name:          'Name' of the pattern.
+#   pattern:       Pattern to be tested, without captures.
+#   keep_pattern:  Pattern to be tested, with captures.
+#   subject:       String to match.
+#   captures:      Hash of captures; keys are the capture names,
+#                  values are captures.
+#   comment:       Comment to use, default to name or "".
+#   utf8_upgrade:  If set, upgrade the string if applicable. Defaults to 1.
+#   utf_downgrade  If set, downgrade the string if applicable. Defaults to 1.
+#   extra_captures Number of captures keep_pattern does not found in captures.
+#   match          If true, pattern(s) should match, otherwise, should fail
+#                  to match. Defaults to 1.
+#   reason         The reason a match should fail.
+#   runs           How often it should be done.
+#   substitute     Replace portions of the subject.
+#
+#   Regexp::Common If set, do some additional mangling.
+#
+
 sub match {
     my %arg            = @_;
 
     my $name           = $arg {name};
-    my $Name           = $name; $Name =~ s/[^a-zA-Z0-9_]+/_/g;
     my $pattern        = $arg {pattern};
     my $keep_pattern   = $arg {keep_pattern};
-    my $subject        = $arg {subject};
-    my $subject_pretty = pretty $subject;
-    my $captures       = $arg {captures};
-    my $comment        = escape $arg {comment} // $name;
-    my $keep           = $arg {keep} // 1;
+    my $o_subject      = $arg {subject};
+    my $o_captures     = $arg {captures};
+    my $comment        = escape $arg {comment} // $name // "";
+    my $upgrade        = $arg {utf8_upgrade}   // 1;
+    my $downgrade      = $arg {utf8_downgrade} // 1;
+    my $extra_captures = $arg {extra_captures} // 0;
+    my $match          = $arg {match}          // 1;
+    my $reason         = $arg {reason} ? "[Reason: " . $arg {reason} . "]"
+                                       : "";
+    my $substitute     = $arg {substitute};
+    my $runs           = $arg {runs} // 1;
 
-    my $plus;
-       $$plus {"${Name}"}     = $subject;
-       $$plus {"${Name}__$_"} = $$captures {$_} for keys %$captures;
-
-    my $Comment        = qq {qq {$subject_pretty}};
-       $Comment       .= qq { matched by "$comment"};
-
-    my @todo           = [$subject, $Comment];
-
-    #
-    # If the subject isn't already UTF-8, and there are characters in
-    # the range "\x{80}" .. "\x{FF}", we do the test a second time,
-    # with the subject upgraded to UTF-8.
-    #
-    # Otherwise, if the subject is in UTF-8 format, and there are *no*
-    # characters with code point > 0xFF, but with characters in the 
-    # range 0x80 .. 0xFF, we downgrade and test again.
-    #
-    if (!utf8::is_utf8 ($subject) && $subject =~ /[\x80-\xFF]/) {
-        my $subject_utf8 = $subject;
-        if (utf8::upgrade ($subject_utf8)) {
-            my $Comment_utf8   = qq {qq {$subject_pretty}};
-               $Comment_utf8  .= qq { [UTF-8]};
-               $Comment_utf8  .= qq { matched by "$comment"};
-
-            push @todo => [$subject_utf8, $Comment_utf8];
+    foreach my $run (1 .. $runs) {
+        my ($subject, $captures);
+        if ($substitute) {
+           ($subject, $captures) = substitute $o_subject, $o_captures;
         }
-    }
-    elsif (utf8::is_utf8 ($subject) && $subject =~ /[\x80-\xFF]/ &&
-                                       $subject !~ /[^\x00-\xFF]/) {
-        my $subject_non_utf8 = $subject;
-        if (utf8::downgrade ($subject_non_utf8)) {
-            my $Comment_non_utf8  = qq {qq {$subject_pretty}};
-               $Comment_non_utf8 .= qq { [non-UTF-8]};
-               $Comment_non_utf8 .= qq { matched by "$comment"};
-
-            push @todo => [$subject_non_utf8, $Comment_non_utf8];
+        else {
+            $subject  = $o_subject;
+            $captures = $o_captures;
         }
-    }
+        my $subject_pretty = pretty $subject;
 
-    #
-    # Test match; match should also be complete.
-    #
-    if (defined $pattern) {
-        foreach my $todo (@todo) {
-            my $subject = $$todo [0];
-            my $comment = $$todo [1];
-            SKIP: {
-                skip "Match failed", 1 unless
-                    ok $subject =~ /$pattern/, $comment;
-                is $&, $subject, "${__}match is complete";
+        my $plus;
+
+        if ($arg {'Regexp::Common'}) {
+            my $Name               =  $name;
+               $Name               =~ s/[^a-zA-Z0-9_]+/_/g;
+            $$plus {"${Name}"}     =  $subject;
+            $$plus {"${Name}__$_"} =  $$captures {$_} for keys %$captures;
+        }
+        else {
+            %$plus = $captures ? %$captures : ();
+        }
+
+        my $Comment        = qq {qq {$subject_pretty}};
+           $Comment       .= qq { matched by "$comment"};
+
+        my @todo           = [$subject, $Comment];
+
+        #
+        # If the subject isn't already UTF-8, and there are characters in
+        # the range "\x{80}" .. "\x{FF}", we do the test a second time,
+        # with the subject upgraded to UTF-8.
+        #
+        # Otherwise, if the subject is in UTF-8 format, and there are *no*
+        # characters with code point > 0xFF, but with characters in the 
+        # range 0x80 .. 0xFF, we downgrade and test again.
+        #
+        if ($upgrade && ($upgrade == 2 ||
+                              !utf8::is_utf8 ($subject)
+                           && $subject =~ /[\x80-\xFF]/)) {
+            my $subject_utf8 = $subject;
+            if (utf8::upgrade ($subject_utf8)) {
+                my $Comment_utf8   = qq {qq {$subject_pretty}};
+                   $Comment_utf8  .= qq { [UTF-8]};
+                   $Comment_utf8  .= qq { matched by "$comment"};
+    
+                push @todo => [$subject_utf8, $Comment_utf8];
             }
         }
-    }
-
-    #
-    # Test keep. Should match, and the parts as well.
-    #
-    if ($keep && defined $keep_pattern) {
+        elsif ($downgrade && ($downgrade == 2 ||
+                                  utf8::is_utf8 ($subject)
+                              && $subject =~ /[\x80-\xFF]/
+                              && $subject !~ /[^\x00-\xFF]/)) {
+            my $subject_non_utf8 = $subject;
+            if (utf8::downgrade ($subject_non_utf8)) {
+                my $Comment_non_utf8  = qq {qq {$subject_pretty}};
+                   $Comment_non_utf8 .= qq { [non-UTF-8]};
+                   $Comment_non_utf8 .= qq { matched by "$comment"};
+    
+                push @todo => [$subject_non_utf8, $Comment_non_utf8];
+            }
+        }
+    
+    
+        #
+        # Now we will do the tests.
+        #
         foreach my $todo (@todo) {
             my $subject = $$todo [0];
             my $comment = $$todo [1];
-
-            SKIP: {
-                skip "Match failed" => scalar keys %$captures unless
-                    ok $subject =~ /^$keep_pattern$/, "$Comment (with -Keep)";
-
-                while (my ($key, $value) = each %$plus) {
-                    my $val = defined $value ? 'eq "' . pretty ($value) . '"'
-                                             : 'undefined';
-                    is $+ {$key}, $value, "${__}\$+ {$key} $val";
+    
+            if ($match && defined $pattern) {
+                #
+                # Test match; match should also be complete.
+                #
+                SKIP: {
+                    skip "Match failed", 1 unless
+                        ok $subject =~ /$pattern/, $comment;
+                    is $&, $subject, "${__}match is complete";
                 }
+            }
+            if ($match && defined $keep_pattern) {
                 #
-                # Not %+, as that's buggy in 5.10.0.
+                # Test keep. Should match, and the parts as well.
                 #
-                my $c = keys %$plus;
-                is scalar  keys %-,
-                   scalar (keys %$plus) + ($arg {extra_groups} // 0),
-                   qq {${__}$c capture groups};
+                SKIP: {
+                    skip "Match failed" => scalar keys %$captures unless
+                        ok $subject =~ /^$keep_pattern$/,
+                                        "$Comment (with -Keep)";
+    
+                    while (my ($key, $value) = each %$plus) {
+                        my $val = defined $value ? 'eq "' . pretty ($value)
+                                                          . '"'
+                                                 : 'undefined';
+                        is $+ {$key}, $value, "${__}\$+ {$key} $val";
+                    }
+                    #
+                    # Not %+, as that's buggy in 5.10.0.
+                    #
+                    my $c = keys %$plus;
+                    is scalar  keys %-,
+                       scalar (keys %$plus) + $extra_captures,
+                       qq {${__}$c capture groups};
+                }
+            }
+    
+            if (!$match && defined $pattern) {
+                ok $subject !~ /^$pattern\z/,
+                  "$comment$reason";
+            }
+            if (!$match && defined $keep_pattern) {
+                ok $subject !~ /^$keep_pattern\z/,
+                  "$comment (with -Keep)$reason";
             }
         }
     }
 }
 
 sub no_match {
-    my %arg            = @_;
- 
-    my $name           = $arg {name};
-    my $pattern        = $arg {pattern};
-    my $keep_pattern   = $arg {keep_pattern};
-    my $subject        = $arg {subject};
-    my $subject_pretty = pretty $subject;
-    my $comment        = escape $arg {comment} // $name;
-    my $reason         = $arg {reason} ? " [Reason: " . $arg {reason} . "]" 
-                                      : "";
-
-    my $Comment        = qq {qq {$subject_pretty}};
-       $Comment       .= qq { not matched by "$comment"};
-
-    my @todo           = [$subject, $Comment];
-
-    if (!utf8::is_utf8 ($subject) && $subject =~ /[\x80-\xFF]/) {
-        my $subject_utf8   = $subject;
-        utf8::upgrade ($subject_utf8);
-
-        my $Comment_utf8   = qq {qq {$subject_pretty}};
-           $Comment_utf8  .= qq { [UTF-8]};
-           $Comment_utf8  .= qq { not matched by "$comment"};
-
-        push @todo => [$subject_utf8, $Comment_utf8];
-    }
-
-    foreach my $todo (@todo) {
-        my $subject = $$todo [0];
-        my $comment = $$todo [1];
-
-        ok $subject !~ /^$pattern\z/,      "$comment$reason"
-            if defined $pattern;
-        ok $subject !~ /^$keep_pattern\z/, "$comment (with -Keep)$reason"
-            if defined $keep_pattern;
-    }
+    push @_ => match => 0;
+    goto &match;
 }
+
+
+
+sub substitute {
+    my ($subject, $o_captures) = @_;
+
+    my $captures;
+    my %ID;
+
+    while ($subject =~ /%\[([^]]*)\]/p) {
+        my $prematch  = ${^PREMATCH};
+        my $postmatch = ${^POSTMATCH};
+        my $command   = $1;
+        my ($tag, @options) = split /\s*;\s*/ => $command;
+        my %option;
+        foreach my $option (@options) {
+            my ($k, $v)   = split /\s*=\s*/ => $option, 2;
+            $option {$k} = $v;
+        }
+        my $replacement = "???";
+        {
+            given (lc $tag) {
+                when ("lorem")   {$replacement = lorem lines => 1}
+                when ("latin")   {$replacement = r_string}
+                when ("uni")     {$replacement = r_string unicode => 1}
+                when (/id:(.*)/) {$replacement = $ID {$1}}
+            }
+            redo if $replacement =~ /%\[/;
+        }
+        $ID {$option {id}} = $replacement if defined $option {id};
+        $subject = "$prematch$replacement$postmatch";
+    }
+    while (my ($key, $value) = each %$o_captures) {
+        $value =~ s/%\[([^]]+)\]/$ID{$1}/g;
+        $$captures {$key} = $value;
+    }
+   ($subject, $captures);
+}
+
+
 
 use charnames ();
 sub _u {map {chr} grep {charnames::viacode ($_)} @_}
@@ -269,9 +339,10 @@ my @LOREM = grep {/\S/} split ' ' =><< '--';
 #
 sub lorem {
     my %arg = @_;
+    $arg {lines} = 1 unless wantarray;
     my @lorem;
 
-    $lorem [0] = join ' ' => @LOREM [0 .. 18];
+    $lorem [0] = join ' ' => @LOREM [0 .. 18] if wantarray;
 
     foreach my $c (1 .. $arg {lines} // 10) {
         my $i = int rand @LOREM;
@@ -281,7 +352,7 @@ sub lorem {
         push @lorem => join ' ' => @LOREM [$i .. $j];
     }
 
-    @lorem;
+    wantarray ? @lorem : $lorem [0];
 }
 
 
