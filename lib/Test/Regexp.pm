@@ -56,6 +56,17 @@ sub pretty {
     $str;
 }
 
+sub _eq_ {
+    !defined $_ [0] && !defined $_ [1] ||
+     defined $_ [0] &&  defined $_ [1] && $_ [0] eq $_ [1];
+}
+
+
+sub mess {
+    my $val = shift;
+    defined $val ? 'eq "' . pretty ($val) . '"' : 'undefined';
+}
+
 
 #
 # Arguments:
@@ -65,6 +76,7 @@ sub pretty {
 #   subject:       String to match.
 #   captures:      Hash of captures; keys are the capture names,
 #                  values are captures.
+#   captures_a:    Array of captures - $1 and frieds.
 #   comment:       Comment to use, default to name or "".
 #   utf8_upgrade:  If set, upgrade the string if applicable. Defaults to 1.
 #   utf_downgrade  If set, downgrade the string if applicable. Defaults to 1.
@@ -86,6 +98,7 @@ sub match {
     my $keep_pattern   = $arg {keep_pattern};
     my $o_subject      = $arg {subject};
     my $o_captures     = $arg {captures};
+    my $captures_a     = $arg {captures_a};
     my $comment        = escape $arg {comment} // $name // "";
     my $upgrade        = $arg {utf8_upgrade}   // 1;
     my $downgrade      = $arg {utf8_downgrade} // 1;
@@ -185,12 +198,21 @@ sub match {
                     skip "Match failed" => scalar keys %$captures unless
                         ok $subject =~ /^$keep_pattern$/,
                                         "$Comment (with -Keep)";
+                    my @number_matches;
+                    #
+                    # Grab numbered captures.
+                    #
+                    if ($captures_a) {
+                        for (my $i = 0; $i < @-; $i ++) {
+                            no strict 'refs';
+                            push @number_matches => $$i;
+                        }
+                    }
+
     
                     while (my ($key, $value) = each %$plus) {
-                        my $val = defined $value ? 'eq "' . pretty ($value)
-                                                          . '"'
-                                                 : 'undefined';
-                        is $+ {$key}, $value, "${__}\$+ {$key} $val";
+                        is $+ {$key}, $value,
+                           "${__}\$+ {$key} " . mess $value;
                     }
                     #
                     # Not %+, as that's buggy in 5.10.0.
@@ -199,6 +221,16 @@ sub match {
                     is scalar  keys %-,
                        scalar (keys %$plus) + $extra_captures,
                        qq {${__}$c capture groups};
+
+                    #
+                    # Check numbered captures.
+                    #
+                    if ($captures_a) {
+                        for (my $i; $i < @number_matches; $i ++) {
+                            is $number_matches [$i], $$captures_a [$i],
+                               "${__}\$$i " . mess $number_matches [$i];
+                        }
+                    }
                 }
             }
     
