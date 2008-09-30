@@ -97,8 +97,7 @@ sub match {
     my $pattern        = $arg {pattern};
     my $keep_pattern   = $arg {keep_pattern};
     my $o_subject      = $arg {subject};
-    my $o_captures     = $arg {captures};
-    my $captures_a     = $arg {captures_a};
+    my $captures       = $arg {captures};
     my $comment        = escape $arg {comment} // $name // "";
     my $upgrade        = $arg {utf8_upgrade}   // 1;
     my $downgrade      = $arg {utf8_downgrade} // 1;
@@ -106,19 +105,41 @@ sub match {
     my $match          = $arg {match}          // 1;
     my $reason         = $arg {reason} ? "[Reason: " . $arg {reason} . "]"
                                        : "";
-    my $substitute     = $arg {substitute};
     my $runs           = $arg {runs} // 1;
+    my $substitute     = $arg {substitute} // $runs > 1;
+
+    my $a_captures;
+    my $h_captures;
+
+    if ($captures) {
+        foreach my $capture (@$captures) {
+            if (ref $capture eq 'ARRAY') {
+                my ($name, $match) = @$capture;
+                push @$a_captures => $match;
+                if ($name =~ /^[a-zA-Z0-9_]+$/) {
+                    push @{$$h_captures {$name}} => $match;
+                }
+            }
+            else {
+                push @$a_captures => $match;
+            }
+        }
+    }
 
     foreach my $run (1 .. $runs) {
-        my ($subject, $captures);
+        my ($subject, $aa_captures, $hh_captures);
         if ($substitute) {
-           ($subject, $captures) = substitute $o_subject, $o_captures;
+           ($subject, $aa_captures, $hh_captures) =
+             substitute $o_subject, $a_captures, $h_captures;
         }
         else {
-            $subject  = $o_subject;
-            $captures = $o_captures;
+            $subject       = $o_subject;
+            $aa_captures   = $a_captures;
+            $hh_captures   = $h_captures;
         }
         my $subject_pretty = pretty $subject;
+
+=pod
 
         my $plus;
 
@@ -131,6 +152,8 @@ sub match {
         else {
             %$plus = $captures ? %$captures : ();
         }
+
+=cut
 
         my $Comment        = qq {qq {$subject_pretty}};
            $Comment       .= qq { matched by "$comment"};
@@ -202,11 +225,9 @@ sub match {
                     #
                     # Grab numbered captures.
                     #
-                    if ($captures_a) {
-                        for (my $i = 0; $i < @-; $i ++) {
-                            no strict 'refs';
-                            push @number_matches => $$i;
-                        }
+                    for (my $i = 0; $i < @-; $i ++) {
+                        no strict 'refs';
+                        push @number_matches => $$i;
                     }
 
     
@@ -254,9 +275,9 @@ sub no_match {
 
 
 sub substitute {
-    my ($subject, $o_captures) = @_;
+    my ($subject, $a_captures, $h_captures) = @_;
 
-    my $captures;
+    my $aa_captures, $hh_captures;
     my %ID;
 
     while ($subject =~ /%\[([^]]*)\]/p) {
@@ -282,11 +303,17 @@ sub substitute {
         $ID {$option {id}} = $replacement if defined $option {id};
         $subject = "$prematch$replacement$postmatch";
     }
-    while (my ($key, $value) = each %$o_captures) {
+    while (my ($key, $value) = each %$h_captures) {
         $value =~ s/%\[([^]]+)\]/$ID{$1}/g;
-        $$captures {$key} = $value;
+        $$hh_captures {$key} = $value;
     }
-   ($subject, $captures);
+    @$aa_captures = map {
+        my $value = $_;
+        $value =~ s/%\[([^]]+)\]/$ID{$1}/g;
+        $value;
+    } @$a_captures;
+
+   ($subject, $aa_captures, $hh_captures);
 }
 
 
