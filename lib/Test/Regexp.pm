@@ -68,6 +68,53 @@ sub mess {
 }
 
 
+sub todo {
+    my %arg       =  @_;
+    my $subject   =  $arg {subject};
+    my $comment   =  $arg {comment};
+    my $upgrade   =  $arg {upgrade};
+    my $downgrade =  $arg {downgrade};
+
+    my @todo      = [$subject, $comment];
+
+    #
+    # If the subject isn't already UTF-8, and there are characters in
+    # the range "\x{80}" .. "\x{FF}", we do the test a second time,
+    # with the subject upgraded to UTF-8.
+    #
+    # Otherwise, if the subject is in UTF-8 format, and there are *no*
+    # characters with code point > 0xFF, but with characters in the 
+    # range 0x80 .. 0xFF, we downgrade and test again.
+    #
+    if ($upgrade && ($upgrade == 2 ||    !utf8::is_utf8 ($subject) 
+                                      && $subject =~ /[\x80-\xFF]/)) {
+        my $subject_utf8 = $subject;
+        if (utf8::upgrade ($subject_utf8)) {
+            my $Comment_utf8   = qq {qq {$subject_pretty}};
+               $Comment_utf8  .= qq { [UTF-8]};
+               $Comment_utf8  .= qq { matched by "$comment"};
+
+            push @todo => [$subject_utf8, $Comment_utf8];
+        }
+    }
+    elsif ($downgrade && ($downgrade == 2 ||     utf8::is_utf8 ($subject)
+                                             && $subject =~ /[\x80-\xFF]/
+                                             && $subject !~ /[^\x00-\xFF]/)) {
+        my $subject_non_utf8 = $subject;
+        if (utf8::downgrade ($subject_non_utf8)) {
+            my $Comment_non_utf8  = qq {qq {$subject_pretty}};
+               $Comment_non_utf8 .= qq { [non-UTF-8]};
+               $Comment_non_utf8 .= qq { matched by "$comment"};
+
+            push @todo => [$subject_non_utf8, $Comment_non_utf8];
+        }
+    }
+
+    @todo;
+}
+    
+
+
 #
 # Arguments:
 #   name:          'Name' of the pattern.
@@ -97,7 +144,7 @@ sub match {
     my $pattern        = $arg {pattern};
     my $keep_pattern   = $arg {keep_pattern};
     my $o_subject      = $arg {subject};
-    my $captures       = $arg {captures};
+    my $captures       = $arg {captures}       // [];
     my $comment        = escape $arg {comment} // $name // "";
     my $upgrade        = $arg {utf8_upgrade}   // 1;
     my $downgrade      = $arg {utf8_downgrade} // 1;
@@ -111,18 +158,20 @@ sub match {
     my $a_captures;
     my $h_captures;
 
-    if ($captures) {
-        foreach my $capture (@$captures) {
-            if (ref $capture eq 'ARRAY') {
-                my ($name, $match) = @$capture;
-                push @$a_captures => $match;
-                if ($name =~ /^[a-zA-Z0-9_]+$/) {
-                    push @{$$h_captures {$name}} => $match;
-                }
+    #
+    # First split the captures into a hash and an array so we can
+    # check both $1 and friends, and %-.
+    #
+    foreach my $capture (@$captures) {
+        if (ref $capture eq 'ARRAY') {
+            my ($name, $match) = @$capture;
+            push @$a_captures => $match;
+            if ($name =~ /^[a-zA-Z0-9_]+$/) {
+                push @{$$h_captures {$name}} => $match;
             }
-            else {
-                push @$a_captures => $match;
-            }
+        }
+        else {
+            push @$a_captures => $match;
         }
     }
 
@@ -158,44 +207,11 @@ sub match {
         my $Comment        = qq {qq {$subject_pretty}};
            $Comment       .= qq { matched by "$comment"};
 
-        my @todo           = [$subject, $Comment];
+        my @todo           = todo subject   => $subject,
+                                  comment   => $comment,
+                                  upgrade   => $upgrade,
+                                  downgrade => $downgrade;
 
-        #
-        # If the subject isn't already UTF-8, and there are characters in
-        # the range "\x{80}" .. "\x{FF}", we do the test a second time,
-        # with the subject upgraded to UTF-8.
-        #
-        # Otherwise, if the subject is in UTF-8 format, and there are *no*
-        # characters with code point > 0xFF, but with characters in the 
-        # range 0x80 .. 0xFF, we downgrade and test again.
-        #
-        if ($upgrade && ($upgrade == 2 ||
-                              !utf8::is_utf8 ($subject)
-                           && $subject =~ /[\x80-\xFF]/)) {
-            my $subject_utf8 = $subject;
-            if (utf8::upgrade ($subject_utf8)) {
-                my $Comment_utf8   = qq {qq {$subject_pretty}};
-                   $Comment_utf8  .= qq { [UTF-8]};
-                   $Comment_utf8  .= qq { matched by "$comment"};
-    
-                push @todo => [$subject_utf8, $Comment_utf8];
-            }
-        }
-        elsif ($downgrade && ($downgrade == 2 ||
-                                  utf8::is_utf8 ($subject)
-                              && $subject =~ /[\x80-\xFF]/
-                              && $subject !~ /[^\x00-\xFF]/)) {
-            my $subject_non_utf8 = $subject;
-            if (utf8::downgrade ($subject_non_utf8)) {
-                my $Comment_non_utf8  = qq {qq {$subject_pretty}};
-                   $Comment_non_utf8 .= qq { [non-UTF-8]};
-                   $Comment_non_utf8 .= qq { matched by "$comment"};
-    
-                push @todo => [$subject_non_utf8, $Comment_non_utf8];
-            }
-        }
-    
-    
         #
         # Now we will do the tests.
         #
@@ -218,10 +234,21 @@ sub match {
                 # Test keep. Should match, and the parts as well.
                 #
                 SKIP: {
-                    skip "Match failed" => scalar keys %$captures unless
-                        ok $subject =~ /^$keep_pattern$/,
+                    my $skips  = 1 + @aa_captures;
+                       $skips += @{$_} for values %hh_captures;
+
+                    my ($amp, @numbered_matches, %minus);
+
+                    skip "Match failed" => $skips unless
+                        ok $subject =~ /^$keep_pattern/,
                                         "$Comment (with -Keep)";
-                    my @number_matches;
+                    #
+                    # Copy $&, $N and %- before doing anything that
+                    # migh override them.
+                    #
+
+                    $amp = $&;
+
                     #
                     # Grab numbered captures.
                     #
@@ -230,28 +257,39 @@ sub match {
                         push @number_matches => $$i;
                     }
 
-    
-                    while (my ($key, $value) = each %$plus) {
-                        is $+ {$key}, $value,
-                           "${__}\$+ {$key} " . mess $value;
+                    #
+                    # Copy %-;
+                    #
+                    while (my ($key, $value) = each %-) {
+                        $minus {$key} = [@$value];
                     }
-                    #
-                    # Not %+, as that's buggy in 5.10.0.
-                    #
-                    my $c = keys %$plus;
-                    is scalar  keys %-,
-                       scalar (keys %$plus) + $extra_captures,
-                       qq {${__}$c capture groups};
+
 
                     #
-                    # Check numbered captures.
+                    # Test named captures.
                     #
-                    if ($captures_a) {
-                        for (my $i; $i < @number_matches; $i ++) {
-                            is $number_matches [$i], $$captures_a [$i],
-                               "${__}\$$i " . mess $number_matches [$i];
+                    while (my ($key, $value) = each %hh_captures) {
+                        for (my $i = 0; $i < @$value; $i ++) {
+                            is $minus {$key} [$i], $$value [$i],
+                               "${__}\$- {$key} [$i] " . mess $$value [$i];
                         }
+                        is scalar @{$minus {$key}}, scalar @$value, 
+                               "${__} capture '$key' has " . @$value .
+                               "matches";
                     }
+                    is scalar keys %minus, scalar %hh_captures 
+                       "${__} named capture groups";
+
+
+                    #
+                    # Test numbered captures.
+                    #
+                    for (my $i = 0; $i < @aa_captures; $i ++) {
+                        is $numbered_matches [$i], $aa_captures [$i],
+                           "${__}\$$i " . mess $aa_captures [$i];
+                    }
+                    XXX
+                    XXX
                 }
             }
     
