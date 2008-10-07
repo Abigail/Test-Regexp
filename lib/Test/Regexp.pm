@@ -25,12 +25,13 @@ use Test::More;
 
 # 
 # Intercept the call to Test::Builder::caller; this allows us to
-# to have error reported in the file/line it occurs, not in Test/Regexp.pm.
+# have the error reported in the file/line it occurs, not in Test/Regexp.pm.
 #
 BEGIN {
     no strict 'refs';
     my $orig = *{"Test::Builder::caller"} {CODE};
     no warnings 'redefine';
+    no warnings 'once';
     *{"Test::Builder::caller"} = sub {
         $_ [1] //= $Test::Builder::deepness // 1;
         goto &$orig;
@@ -68,14 +69,24 @@ sub mess {
 }
 
 
-sub todo {
-    my %arg       =  @_;
-    my $subject   =  $arg {subject};
-    my $comment   =  $arg {comment};
-    my $upgrade   =  $arg {upgrade};
-    my $downgrade =  $arg {downgrade};
+#
+# todo is exported by Test::More.
+#
+sub Todo {
+    my %arg            =  @_;
+    my $subject        =  $arg {subject};
+    my $comment        =  $arg {comment};
+    my $upgrade        =  $arg {upgrade};
+    my $downgrade      =  $arg {downgrade};
+    my $neg            =  $arg {match} ? "" : "not ";
 
-    my @todo      = [$subject, $comment];
+    my ($file, $line)  = (caller ($Test::Builder::deepness // 1)) [1, 2];
+
+    my $subject_pretty = pretty $subject;
+    my $Comment        = qq {qq {$subject_pretty}};
+       $Comment       .= qq { ${neg}matched by "$comment" [$file:$line]};
+
+    my @todo      = [$subject, $Comment];
 
     #
     # If the subject isn't already UTF-8, and there are characters in
@@ -92,7 +103,7 @@ sub todo {
         if (utf8::upgrade ($subject_utf8)) {
             my $Comment_utf8   = qq {qq {$subject_pretty}};
                $Comment_utf8  .= qq { [UTF-8]};
-               $Comment_utf8  .= qq { matched by "$comment"};
+               $Comment_utf8  .= qq { ${neg}matched by "$comment"};
 
             push @todo => [$subject_utf8, $Comment_utf8];
         }
@@ -104,7 +115,7 @@ sub todo {
         if (utf8::downgrade ($subject_non_utf8)) {
             my $Comment_non_utf8  = qq {qq {$subject_pretty}};
                $Comment_non_utf8 .= qq { [non-UTF-8]};
-               $Comment_non_utf8 .= qq { matched by "$comment"};
+               $Comment_non_utf8 .= qq { ${neg}matched by "$comment"};
 
             push @todo => [$subject_non_utf8, $Comment_non_utf8];
         }
@@ -150,7 +161,7 @@ sub match {
     my $downgrade      = $arg {utf8_downgrade} // 1;
     my $extra_captures = $arg {extra_captures} // 0;
     my $match          = $arg {match}          // 1;
-    my $reason         = $arg {reason} ? "[Reason: " . $arg {reason} . "]"
+    my $reason         = $arg {reason} ? " [Reason: " . $arg {reason} . "]"
                                        : "";
     my $runs           = $arg {runs} // 1;
     my $substitute     = $arg {substitute} // $runs > 1;
@@ -186,31 +197,28 @@ sub match {
             $aa_captures   = $a_captures;
             $hh_captures   = $h_captures;
         }
-        my $subject_pretty = pretty $subject;
-
-=pod
-
-        my $plus;
+        my @aa_captures = @{$aa_captures || []};
+        my %hh_captures = %{$hh_captures || {}};
 
         if ($arg {'Regexp::Common'}) {
-            my $Name               =  $name;
-               $Name               =~ s/[^a-zA-Z0-9_]+/_/g;
-            $$plus {"${Name}"}     =  $subject;
-            $$plus {"${Name}__$_"} =  $$captures {$_} for keys %$captures;
+            my $Name            =  $name;
+               $Name            =~ s/[^a-zA-Z0-9_]+/_/g;
+            my %hh;
+            $hh {"${Name}"}     =  [$subject];
+            $hh {"${Name}__$_"} =  $hh_captures {$_} for keys %hh_captures;
+            %hh_captures = %hh;
+
+            my @aa = ($subject,
+                      map {ref $_ ? ["${Name}__" . $$_ [0], $$_ [1]] : $_}
+                      @aa_captures);
+            @aa_captures = @aa;
         }
-        else {
-            %$plus = $captures ? %$captures : ();
-        }
 
-=cut
-
-        my $Comment        = qq {qq {$subject_pretty}};
-           $Comment       .= qq { matched by "$comment"};
-
-        my @todo           = todo subject   => $subject,
+        my @todo           = Todo subject   => $subject,
                                   comment   => $comment,
                                   upgrade   => $upgrade,
-                                  downgrade => $downgrade;
+                                  downgrade => $downgrade,
+                                  match     => $match;
 
         #
         # Now we will do the tests.
@@ -241,7 +249,7 @@ sub match {
 
                     skip "Match failed" => $skips unless
                         ok $subject =~ /^$keep_pattern/,
-                                        "$Comment (with -Keep)";
+                                        "$comment (with -Keep)";
                     #
                     # Copy $&, $N and %- before doing anything that
                     # migh override them.
@@ -252,9 +260,9 @@ sub match {
                     #
                     # Grab numbered captures.
                     #
-                    for (my $i = 0; $i < @-; $i ++) {
+                    for (my $i = 1; $i < @-; $i ++) {
                         no strict 'refs';
-                        push @number_matches => $$i;
+                        push @numbered_matches => $$i;
                     }
 
                     #
@@ -275,10 +283,14 @@ sub match {
                         }
                         is scalar @{$minus {$key}}, scalar @$value, 
                                "${__} capture '$key' has " . @$value .
-                               "matches";
+                               " matches";
                     }
-                    is scalar keys %minus, scalar %hh_captures 
-                       "${__} named capture groups";
+                    #
+                    # Test for the right number of captures.
+                    #
+                    is scalar keys %minus, scalar keys %hh_captures,
+                       $__ . scalar (keys %hh_captures)
+                           . " named capture groups";
 
 
                     #
@@ -288,8 +300,8 @@ sub match {
                         is $numbered_matches [$i], $aa_captures [$i],
                            "${__}\$$i " . mess $aa_captures [$i];
                     }
-                    XXX
-                    XXX
+                    is scalar @numbered_matches, scalar @aa_captures,
+                       $__ . @aa_captures . " numbered captured groups";
                 }
             }
     
@@ -315,7 +327,7 @@ sub no_match {
 sub substitute {
     my ($subject, $a_captures, $h_captures) = @_;
 
-    my $aa_captures, $hh_captures;
+    my ($aa_captures, $hh_captures);
     my %ID;
 
     while ($subject =~ /%\[([^]]*)\]/p) {
