@@ -8,7 +8,7 @@ no  warnings 'syntax';
 
 use Exporter ();
 
-our @EXPORT  = qw [match no_match r_string lorem v_diag];
+our @EXPORT  = qw [match no_match r_string lorem];
 our @ISA     = qw [Exporter];
 
 sub substitute;
@@ -80,13 +80,18 @@ sub Todo {
     my $downgrade      =  $arg {downgrade};
     my $neg            =  $arg {match} ? "" : "not ";
 
-    my ($file, $line)  = (caller ($Test::Builder::deepness // 1)) [1, 2];
+    my $line           = "";
+
+    if ($arg {show_line}) {
+        my ($file, $l_nr)  = (caller ($Test::Builder::deepness // 1)) [1, 2];
+        $line = " [$file:$l_nr]";
+    }
 
     my $subject_pretty = pretty $subject;
     my $Comment        = qq {qq {$subject_pretty}};
-       $Comment       .= qq { ${neg}matched by "$comment" [$file:$line]};
+       $Comment       .= qq { ${neg}matched by "$comment"$line};
 
-    my @todo      = [$subject, $Comment];
+    my @todo = [$subject, $Comment];
 
     #
     # If the subject isn't already UTF-8, and there are characters in
@@ -103,7 +108,7 @@ sub Todo {
         if (utf8::upgrade ($subject_utf8)) {
             my $Comment_utf8   = qq {qq {$subject_pretty}};
                $Comment_utf8  .= qq { [UTF-8]};
-               $Comment_utf8  .= qq { ${neg}matched by "$comment"};
+               $Comment_utf8  .= qq { ${neg}matched by "$comment"$line};
 
             push @todo => [$subject_utf8, $Comment_utf8];
         }
@@ -115,7 +120,7 @@ sub Todo {
         if (utf8::downgrade ($subject_non_utf8)) {
             my $Comment_non_utf8  = qq {qq {$subject_pretty}};
                $Comment_non_utf8 .= qq { [non-UTF-8]};
-               $Comment_non_utf8 .= qq { ${neg}matched by "$comment"};
+               $Comment_non_utf8 .= qq { ${neg}matched by "$comment"$line};
 
             push @todo => [$subject_non_utf8, $Comment_non_utf8];
         }
@@ -128,7 +133,7 @@ sub Todo {
 
 #
 # Arguments:
-#   name:          'Name' of the pattern.
+#   name:         'Name' of the pattern.
 #   pattern:       Pattern to be tested, without captures.
 #   keep_pattern:  Pattern to be tested, with captures.
 #   subject:       String to match.
@@ -144,8 +149,10 @@ sub Todo {
 #   reason         The reason a match should fail.
 #   runs           How often it should be done.
 #   substitute     Replace portions of the subject.
+#   show_line      Show file name/line number of call to 'match'.
 #
-#   Regexp::Common If set, do some additional mangling.
+#   style          If set, do some additional mangling, depending on
+#                  the value. Currently only recognized value is Regexp::Common
 #
 
 sub match {
@@ -165,6 +172,10 @@ sub match {
                                        : "";
     my $runs           = $arg {runs} // 1;
     my $substitute     = $arg {substitute} // $runs > 1;
+    my $show_line      = $arg {show_line};
+    my $style          = $arg {style} // "";
+
+    $show_line       //= 1 if $style eq 'Regexp::Common';
 
     my $a_captures;
     my $h_captures;
@@ -200,25 +211,34 @@ sub match {
         my @aa_captures = @{$aa_captures || []};
         my %hh_captures = %{$hh_captures || {}};
 
-        if ($arg {'Regexp::Common'}) {
-            my $Name            =  $name;
-               $Name            =~ s/[^a-zA-Z0-9_]+/_/g;
-            my %hh;
-            $hh {"${Name}"}     =  [$subject];
-            $hh {"${Name}__$_"} =  $hh_captures {$_} for keys %hh_captures;
-            %hh_captures = %hh;
+        #
+        # TODO: Move most of it outside of the loop, as that's constant.
+        # Note however that $subject is only fixed after substitution.
+        #
+        given ($arg {style}) {
+            when ("Regexp::Common") {
+                my $Name            =  $name;
+                   $Name            =~ s/[^a-zA-Z0-9_]+/_/g;
+                my %hh;
+                $hh {"${Name}"}     =  [$subject];
+                $hh {"${Name}__$_"} =  $hh_captures {$_}
+                                        for keys %hh_captures;
+                %hh_captures = %hh;
 
-            my @aa = ($subject,
-                      map {ref $_ ? ["${Name}__" . $$_ [0], $$_ [1]] : $_}
-                      @aa_captures);
-            @aa_captures = @aa;
+                my @aa = ($subject,
+                          map {ref $_ ? ["${Name}__" . $$_ [0], $$_ [1]]
+                                      : $_}
+                          @aa_captures);
+                @aa_captures = @aa;
+            }
         }
 
         my @todo           = Todo subject   => $subject,
                                   comment   => $comment,
                                   upgrade   => $upgrade,
                                   downgrade => $downgrade,
-                                  match     => $match;
+                                  match     => $match,
+                                  show_line => $show_line;
 
         #
         # Now we will do the tests.
@@ -354,8 +374,11 @@ sub substitute {
         $subject = "$prematch$replacement$postmatch";
     }
     while (my ($key, $value) = each %$h_captures) {
-        $value =~ s/%\[([^]]+)\]/$ID{$1}/g;
-        $$hh_captures {$key} = $value;
+        $$hh_captures {$key} = [map {
+            my $value = $_;
+            $value =~ s/%\[([^]]+)\]/$ID{$1}/g;
+            $value
+        } @$value];
     }
     @$aa_captures = map {
         my $value = $_;
