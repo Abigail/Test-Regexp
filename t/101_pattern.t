@@ -38,36 +38,41 @@ BEGIN {
 
 sub check {
     my $expected = shift;
-    my @caller = caller (0);
-    my $line   = $caller [2];
     my $tag    = "ok ";
     if ($expected !~ /^$result$/) {
         say "# Got '$result'";
         say "# Expected '$expected'";
         $tag = "not $tag";
     }
-    say $tag, ++ $count, " Line $line";
+    say $tag, ++ $count, " DATA line $.";
     $result = "";
 }
 
 while (<DATA>) {
     chomp;
-    my ($subject, $pattern, $r) = split /\s+-\s+/;
-    if ($r =~ /p/) {
-        match subject  =>  $subject,
-              pattern  =>  $pattern,
-        ;
-        check "PP";
-    }
-    else {
-        match subject  =>  $subject,
-              pattern  =>  $pattern,
-        ;
-        check "PF";
-    }
+    m {^\h* (?|"(?<subject>[^"]*)"|(?<subject>\S+))
+        \h+ (?|/(?<pattern>[^/]*)/|(?<pattern>\S+))
+        \h+ (?<match>(?i:[ymn01]))
+        \h+ (?<result>[PF]+)
+        \h* (?:$|\#)}x or next;
+    my ($subject, $pattern, $match, $result) =
+        @+ {qw [subject pattern match result]};
+
+    my $match_val = $match =~ /[ym1]/i;
+    match subject  =>  $subject,
+          pattern  =>  $pattern,
+          match    =>  $match_val;
+    check $result;
 }
 
+#
+# Names in the __DATA__ section come from 'meta norse_mythology'.
+#
 
 __DATA__
-foo    -   ...   -  p
-bar    -   ..    -  f
+Dagr     ....     y   PP
+Kvasir   Kvasir   y   PP
+Snotra   \w+      y   PP
+Sjofn    \w+      n   F    # It matches, so a no match should fail
+Borr     Bo       y   PF   # Match is only partial
+Magni    Sigyn    y   FP   # Fail, then a skip
