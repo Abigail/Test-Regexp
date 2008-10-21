@@ -17,8 +17,8 @@ match subject      => "1234",
       comment      => "Whatever",
       pattern      => qr /[1-4]+/,
       keep_pattern => qr /(?<one>12)(?<two>34)/,
-      captures     => {
-          one  =>  '12',
-          two  =>  '34',
-      },
+      captures     => [
+          [one  =>  '12'],
+          [two  =>  '34'],
+      ],
 ;

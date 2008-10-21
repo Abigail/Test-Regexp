@@ -8,8 +8,11 @@ no  warnings 'syntax';
 
 use Exporter ();
 
-our @EXPORT  = qw [match no_match r_string lorem];
-our @ISA     = qw [Exporter];
+use vars qw [$TESTS_FAIL $TESTS_PASS];
+
+our @EXPORT    = qw [match no_match r_string lorem];
+our @EXPORT_OK = qw [$TESTS_FAIL $TESTS_PASS];
+our @ISA       = qw [Exporter];
 
 sub substitute;
 sub lorem;
@@ -19,9 +22,10 @@ our $VERSION = '0.01';
 
 BEGIN {
     binmode STDOUT, ":utf8";
+  # binmode $Test::TESTOUT, ":utf8";
 }
 
-use Test::More;
+use Test::More import => [qw [!ok !is]];
 
 # 
 # Intercept the call to Test::Builder::caller; this allows us to
@@ -130,6 +134,16 @@ sub Todo {
 }
     
 
+sub ok {
+    my $c = &Test::More::ok (@_);
+   ($c ? $TESTS_PASS : $TESTS_FAIL) ++;
+    $c;
+}
+sub is {
+    my $c = &Test::More::is (@_);
+   ($c ? $TESTS_PASS : $TESTS_FAIL) ++;
+    $c;
+}
 
 #
 # Arguments:
@@ -137,18 +151,16 @@ sub Todo {
 #   pattern:       Pattern to be tested, without captures.
 #   keep_pattern:  Pattern to be tested, with captures.
 #   subject:       String to match.
-#   captures:      Hash of captures; keys are the capture names,
-#                  values are captures.
-#   captures_a:    Array of captures - $1 and frieds.
+#   captures:      Array of captures; elements are either strings
+#                  (match for the corresponding numbered capture),
+#                  or an array, where the first element is the name
+#                  of the capture and the second its value.
 #   comment:       Comment to use, default to name or "".
 #   utf8_upgrade:  If set, upgrade the string if applicable. Defaults to 1.
 #   utf_downgrade  If set, downgrade the string if applicable. Defaults to 1.
-#   extra_captures Number of captures keep_pattern does not found in captures.
 #   match          If true, pattern(s) should match, otherwise, should fail
 #                  to match. Defaults to 1.
 #   reason         The reason a match should fail.
-#   runs           How often it should be done.
-#   substitute     Replace portions of the subject.
 #   show_line      Show file name/line number of call to 'match'.
 #
 #   style          If set, do some additional mangling, depending on
@@ -161,24 +173,24 @@ sub match {
     my $name           = $arg {name};
     my $pattern        = $arg {pattern};
     my $keep_pattern   = $arg {keep_pattern};
-    my $o_subject      = $arg {subject};
+    my $subject        = $arg {subject};
     my $captures       = $arg {captures}       // [];
     my $comment        = escape $arg {comment} // $name // "";
     my $upgrade        = $arg {utf8_upgrade}   // 1;
     my $downgrade      = $arg {utf8_downgrade} // 1;
-    my $extra_captures = $arg {extra_captures} // 0;
     my $match          = $arg {match}          // 1;
     my $reason         = $arg {reason} ? " [Reason: " . $arg {reason} . "]"
                                        : "";
-    my $runs           = $arg {runs} // 1;
-    my $substitute     = $arg {substitute} // $runs > 1;
     my $show_line      = $arg {show_line};
     my $style          = $arg {style} // "";
 
+    $TESTS_FAIL        = 0;
+    $TESTS_PASS        = 0;
+
     $show_line       //= 1 if $style eq 'Regexp::Common';
 
-    my $a_captures;
-    my $h_captures;
+    my $aa_captures;
+    my $hh_captures;
 
     #
     # First split the captures into a hash and an array so we can
@@ -187,206 +199,145 @@ sub match {
     foreach my $capture (@$captures) {
         if (ref $capture eq 'ARRAY') {
             my ($name, $match) = @$capture;
-            push @$a_captures => $match;
+            push @$aa_captures => $match;
             if ($name =~ /^[a-zA-Z0-9_]+$/) {
-                push @{$$h_captures {$name}} => $match;
+                push @{$$hh_captures {$name}} => $match;
             }
         }
         else {
-            push @$a_captures => $match;
+            push @$aa_captures => $match;
+        }
+    }
+    
+    my @aa_captures = @{$aa_captures || []};
+    my %hh_captures = %{$hh_captures || {}};
+
+    given ($arg {style}) {
+        when ("Regexp::Common") {
+            my $Name            =  $name;
+               $Name            =~ s/[^a-zA-Z0-9_]+/_/g;
+            my %hh;
+            $hh {"${Name}"}     =  [$subject];
+            $hh {"${Name}__$_"} =  $hh_captures {$_}
+                                    for keys %hh_captures;
+            %hh_captures = %hh;
+
+            my @aa = ($subject,
+                      map {ref $_ ? ["${Name}__" . $$_ [0], $$_ [1]]
+                                  : $_}
+                      @aa_captures);
+            @aa_captures = @aa;
         }
     }
 
-    foreach my $run (1 .. $runs) {
-        my ($subject, $aa_captures, $hh_captures);
-        if ($substitute) {
-           ($subject, $aa_captures, $hh_captures) =
-             substitute $o_subject, $a_captures, $h_captures;
-        }
-        else {
-            $subject       = $o_subject;
-            $aa_captures   = $a_captures;
-            $hh_captures   = $h_captures;
-        }
-        my @aa_captures = @{$aa_captures || []};
-        my %hh_captures = %{$hh_captures || {}};
+    my @todo           = Todo subject   => $subject,
+                              comment   => $comment,
+                              upgrade   => $upgrade,
+                              downgrade => $downgrade,
+                              match     => $match,
+                              show_line => $show_line;
 
-        #
-        # TODO: Move most of it outside of the loop, as that's constant.
-        # Note however that $subject is only fixed after substitution.
-        #
-        given ($arg {style}) {
-            when ("Regexp::Common") {
-                my $Name            =  $name;
-                   $Name            =~ s/[^a-zA-Z0-9_]+/_/g;
-                my %hh;
-                $hh {"${Name}"}     =  [$subject];
-                $hh {"${Name}__$_"} =  $hh_captures {$_}
-                                        for keys %hh_captures;
-                %hh_captures = %hh;
+    #
+    # Now we will do the tests.
+    #
+    foreach my $todo (@todo) {
+        my $subject = $$todo [0];
+        my $comment = $$todo [1];
 
-                my @aa = ($subject,
-                          map {ref $_ ? ["${Name}__" . $$_ [0], $$_ [1]]
-                                      : $_}
-                          @aa_captures);
-                @aa_captures = @aa;
+        if ($match && defined $pattern) {
+            #
+            # Test match; match should also be complete.
+            #
+            SKIP: {
+                my $result = $subject =~ /^$pattern/;
+                skip "Match failed", 1 unless ok $result, $comment;
+                is $&, $subject, "${__}match is complete";
             }
         }
+        if ($match && defined $keep_pattern) {
+            #
+            # Test keep. Should match, and the parts as well.
+            #
+            SKIP: {
+                my $skips  = 1 + @aa_captures;
+                   $skips += @{$_} for values %hh_captures;
 
-        my @todo           = Todo subject   => $subject,
-                                  comment   => $comment,
-                                  upgrade   => $upgrade,
-                                  downgrade => $downgrade,
-                                  match     => $match,
-                                  show_line => $show_line;
+                my ($amp, @numbered_matches, %minus);
 
-        #
-        # Now we will do the tests.
-        #
-        foreach my $todo (@todo) {
-            my $subject = $$todo [0];
-            my $comment = $$todo [1];
-    
-            if ($match && defined $pattern) {
+                my $result = $subject =~ /^$keep_pattern/;
+                skip "Match failed" => $skips unless
+                    ok $result, "$comment (with -Keep)";
                 #
-                # Test match; match should also be complete.
+                # Copy $&, $N and %- before doing anything that
+                # migh override them.
                 #
-                SKIP: {
-                    skip "Match failed", 1 unless
-                        ok $subject =~ /$pattern/, $comment;
-                    is $&, $subject, "${__}match is complete";
+
+                $amp = $&;
+
+                #
+                # Grab numbered captures.
+                #
+                for (my $i = 1; $i < @-; $i ++) {
+                    no strict 'refs';
+                    push @numbered_matches => $$i;
                 }
-            }
-            if ($match && defined $keep_pattern) {
+
                 #
-                # Test keep. Should match, and the parts as well.
+                # Copy %-;
                 #
-                SKIP: {
-                    my $skips  = 1 + @aa_captures;
-                       $skips += @{$_} for values %hh_captures;
-
-                    my ($amp, @numbered_matches, %minus);
-
-                    skip "Match failed" => $skips unless
-                        ok $subject =~ /^$keep_pattern/,
-                                        "$comment (with -Keep)";
-                    #
-                    # Copy $&, $N and %- before doing anything that
-                    # migh override them.
-                    #
-
-                    $amp = $&;
-
-                    #
-                    # Grab numbered captures.
-                    #
-                    for (my $i = 1; $i < @-; $i ++) {
-                        no strict 'refs';
-                        push @numbered_matches => $$i;
-                    }
-
-                    #
-                    # Copy %-;
-                    #
-                    while (my ($key, $value) = each %-) {
-                        $minus {$key} = [@$value];
-                    }
-
-
-                    #
-                    # Test named captures.
-                    #
-                    while (my ($key, $value) = each %hh_captures) {
-                        for (my $i = 0; $i < @$value; $i ++) {
-                            is $minus {$key} [$i], $$value [$i],
-                               "${__}\$- {$key} [$i] " . mess $$value [$i];
-                        }
-                        is scalar @{$minus {$key}}, scalar @$value, 
-                               "${__} capture '$key' has " . @$value .
-                               " matches";
-                    }
-                    #
-                    # Test for the right number of captures.
-                    #
-                    is scalar keys %minus, scalar keys %hh_captures,
-                       $__ . scalar (keys %hh_captures)
-                           . " named capture groups";
-
-
-                    #
-                    # Test numbered captures.
-                    #
-                    for (my $i = 0; $i < @aa_captures; $i ++) {
-                        is $numbered_matches [$i], $aa_captures [$i],
-                           "${__}\$$i " . mess $aa_captures [$i];
-                    }
-                    is scalar @numbered_matches, scalar @aa_captures,
-                       $__ . @aa_captures . " numbered captured groups";
+                while (my ($key, $value) = each %-) {
+                    $minus {$key} = [@$value];
                 }
+
+
+                #
+                # Test named captures.
+                #
+                while (my ($key, $value) = each %hh_captures) {
+                    for (my $i = 0; $i < @$value; $i ++) {
+                        is $minus {$key} [$i], $$value [$i],
+                           "${__}\$- {$key} [$i] " . mess $$value [$i];
+                    }
+                    is scalar @{$minus {$key}}, scalar @$value, 
+                           "${__} capture '$key' has " . @$value .
+                           " matches";
+                }
+                #
+                # Test for the right number of captures.
+                #
+                is scalar keys %minus, scalar keys %hh_captures,
+                   $__ . scalar (keys %hh_captures)
+                       . " named capture groups";
+
+
+                #
+                # Test numbered captures.
+                #
+                for (my $i = 0; $i < @aa_captures; $i ++) {
+                    is $numbered_matches [$i], $aa_captures [$i],
+                       "${__}\$$i " . mess $aa_captures [$i];
+                }
+                is scalar @numbered_matches, scalar @aa_captures,
+                   $__ . @aa_captures . " numbered captured groups";
             }
-    
-            if (!$match && defined $pattern) {
-                ok $subject !~ /^$pattern\z/,
-                  "$comment$reason";
-            }
-            if (!$match && defined $keep_pattern) {
-                ok $subject !~ /^$keep_pattern\z/,
-                  "$comment (with -Keep)$reason";
-            }
+        }
+
+        if (!$match && defined $pattern) {
+            ok $subject !~ /^$pattern\z/,
+              "$comment$reason";
+        }
+        if (!$match && defined $keep_pattern) {
+            ok $subject !~ /^$keep_pattern\z/,
+              "$comment (with -Keep)$reason";
         }
     }
+
+    !$TESTS_FAIL;
 }
 
 sub no_match {
     push @_ => match => 0;
     goto &match;
-}
-
-
-
-sub substitute {
-    my ($subject, $a_captures, $h_captures) = @_;
-
-    my ($aa_captures, $hh_captures);
-    my %ID;
-
-    while ($subject =~ /%\[([^]]*)\]/p) {
-        my $prematch  = ${^PREMATCH};
-        my $postmatch = ${^POSTMATCH};
-        my $command   = $1;
-        my ($tag, @options) = split /\s*;\s*/ => $command;
-        my %option;
-        foreach my $option (@options) {
-            my ($k, $v)   = split /\s*=\s*/ => $option, 2;
-            $option {$k} = $v;
-        }
-        my $replacement = "???";
-        {
-            given (lc $tag) {
-                when ("lorem")   {$replacement = lorem lines => 1}
-                when ("latin")   {$replacement = r_string}
-                when ("uni")     {$replacement = r_string unicode => 1}
-                when (/id:(.*)/) {$replacement = $ID {$1}}
-            }
-            redo if $replacement =~ /%\[/;
-        }
-        $ID {$option {id}} = $replacement if defined $option {id};
-        $subject = "$prematch$replacement$postmatch";
-    }
-    while (my ($key, $value) = each %$h_captures) {
-        $$hh_captures {$key} = [map {
-            my $value = $_;
-            $value =~ s/%\[([^]]+)\]/$ID{$1}/g;
-            $value
-        } @$value];
-    }
-    @$aa_captures = map {
-        my $value = $_;
-        $value =~ s/%\[([^]]+)\]/$ID{$1}/g;
-        $value;
-    } @$a_captures;
-
-   ($subject, $aa_captures, $hh_captures);
 }
 
 
