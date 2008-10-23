@@ -60,22 +60,20 @@ sub check {
     my $op = $match_val ? "=~" : "!~";
     say $tag, ++ $count, qq { "$subject" $op /$pattern/};
 
-    #
-    # FIX ME
-    #
-    my $passes = $result   =~ y/P//;
-    my $fails  = $result   =~ y/F//;
+    my $passes = $expected =~ y/P//;
+    my $fails  = $expected =~ y/F//;
     my $skips  = $expected =~ y/S//;
     $tag = "ok ";
-    unless ($passes == $Test::Regexp::TESTS_PASS +
-                       $Test::Regexp::TESTS_SKIP &&
+    unless ($passes == $Test::Regexp::TESTS_PASS &&
             $fails  == $Test::Regexp::TESTS_FAIL &&
             $skips  == $Test::Regexp::TESTS_SKIP) {
         $tag = "not ok ";
-        printf "# Got '%d' passes, expected '%d'\n" .
-               "# Got '%d' failures, expected '%d'\n" =>
+        printf "# Got '%d' passes, expected '%d'\n"   .
+               "# Got '%d' failures, expected '%d'\n" .
+               "# Got '%d' skips, expected '%d'\n"    =>
             $Test::Regexp::TESTS_PASS, $passes,
-            $Test::Regexp::TESTS_FAIL, $fails;
+            $Test::Regexp::TESTS_FAIL, $fails,
+            $Test::Regexp::TESTS_SKIP, $skips;
         $failures ++;
     }
     say $tag, ++ $count, qq { TESTS_PASS and TESTS_FAIL};
