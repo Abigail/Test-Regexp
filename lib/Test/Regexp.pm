@@ -8,11 +8,11 @@ no  warnings 'syntax';
 
 use Exporter ();
 
-use vars qw [$TESTS_FAIL $TESTS_PASS];
+use vars qw [$TESTS_FAIL $TESTS_PASS $TESTS_SKIP];
 
 our @EXPORT    = qw [match no_match r_string lorem];
-our @EXPORT_OK = qw [$TESTS_FAIL $TESTS_PASS];
-our @ISA       = qw [Exporter];
+our @EXPORT_OK = qw [$TESTS_FAIL $TESTS_PASS $TESTS_SKIP];
+our @ISA       = qw [Exporter Test::More];
 
 sub substitute;
 sub lorem;
@@ -22,10 +22,9 @@ our $VERSION = '0.01';
 
 BEGIN {
     binmode STDOUT, ":utf8";
-  # binmode $Test::TESTOUT, ":utf8";
 }
 
-use Test::More import => [qw [!ok !is]];
+use Test::More import => [qw [!ok !is !todo !skip]];
 
 # 
 # Intercept the call to Test::Builder::caller; this allows us to
@@ -61,11 +60,6 @@ sub pretty {
     $str;
 }
 
-sub _eq_ {
-    !defined $_ [0] && !defined $_ [1] ||
-     defined $_ [0] &&  defined $_ [1] && $_ [0] eq $_ [1];
-}
-
 
 sub mess {
     my $val = shift;
@@ -73,10 +67,7 @@ sub mess {
 }
 
 
-#
-# todo is exported by Test::More.
-#
-sub Todo {
+sub todo {
     my %arg            =  @_;
     my $subject        =  $arg {subject};
     my $comment        =  $arg {comment};
@@ -135,14 +126,18 @@ sub Todo {
     
 
 sub ok {
-    my $c = &Test::More::ok (@_);
+    my $c = &Test::More::ok (@_);   # Bypass ok's prototype.
    ($c ? $TESTS_PASS : $TESTS_FAIL) ++;
     $c;
 }
 sub is {
-    my $c = &Test::More::is (@_);
+    my $c = &Test::More::is (@_);   # Bypass is's prototype.
    ($c ? $TESTS_PASS : $TESTS_FAIL) ++;
     $c;
+}
+sub skip {
+    $TESTS_SKIP += $_ [1];
+    goto &Test::More::skip;
 }
 
 #
@@ -186,6 +181,7 @@ sub match {
 
     $TESTS_FAIL        = 0;
     $TESTS_PASS        = 0;
+    $TESTS_SKIP        = 0;
 
     $show_line       //= 1 if $style eq 'Regexp::Common';
 
@@ -230,7 +226,7 @@ sub match {
         }
     }
 
-    my @todo           = Todo subject   => $subject,
+    my @todo           = todo subject   => $subject,
                               comment   => $comment,
                               upgrade   => $upgrade,
                               downgrade => $downgrade,
@@ -246,12 +242,14 @@ sub match {
 
         if ($match && defined $pattern) {
             #
-            # Test match; match should also be complete.
+            # Test match; match should also be complete, and not
+            # have any captures.
             #
             SKIP: {
                 my $result = $subject =~ /^$pattern/;
-                skip "Match failed", 1 unless ok $result, $comment;
+                skip "Match failed", 2 unless ok $result, $comment;
                 is $&, $subject, "${__}match is complete";
+                ok @- == 1 && keys %- == 0, "${__}no captures";
             }
         }
         if ($match && defined $keep_pattern) {
@@ -323,12 +321,12 @@ sub match {
         }
 
         if (!$match && defined $pattern) {
-            ok $subject !~ /^$pattern\z/,
-              "$comment$reason";
+            my $r = $subject =~ /^$pattern/;
+            ok !$r || $subject ne $&, "$comment$reason";
         }
         if (!$match && defined $keep_pattern) {
-            ok $subject !~ /^$keep_pattern\z/,
-              "$comment (with -Keep)$reason";
+            my $r = $subject =~ /^$keep_pattern/;
+            ok !$r || $subject ne $&, "$comment (with -Keep)$reason";
         }
     }
 

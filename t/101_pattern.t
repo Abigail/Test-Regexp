@@ -8,8 +8,17 @@ use 5.010;
 
 our $VERSION = 1.000;
 
-use Test::More 'no_plan';
+my $failures = 0;
+
+#
+# This end block should preceed the use of Test::Regexp.
+#
+END {
+    Test::Builder::_my_exit ($failures > 254 ? 254 : $failures)
+};
+
 use Test::Regexp;
+Test::Regexp -> builder -> plan ('no_plan');
 
 my $result = "";
 my $count  = 0;
@@ -36,15 +45,41 @@ BEGIN {
     *{"Test::Builder::_print_diag"} = sub {1;}
 }
 
+my ($subject, $pattern, $match_val);
 sub check {
     my $expected = shift;
-    my $tag    = "ok ";
-    if ($expected !~ /^$result$/) {
+    my $tag      = "ok ";
+    my $exp_pat  = $expected;
+       $exp_pat  =~ s/S/P/g;
+    if ($result !~ /^$exp_pat$/) {
         say "# Got '$result'";
         say "# Expected '$expected'";
         $tag = "not $tag";
+        $failures ++;
     }
-    say $tag, ++ $count, " DATA line $.";
+    my $op = $match_val ? "=~" : "!~";
+    say $tag, ++ $count, qq { "$subject" $op /$pattern/};
+
+    #
+    # FIX ME
+    #
+    my $passes = $result   =~ y/P//;
+    my $fails  = $result   =~ y/F//;
+    my $skips  = $expected =~ y/S//;
+    $tag = "ok ";
+    unless ($passes == $Test::Regexp::TESTS_PASS +
+                       $Test::Regexp::TESTS_SKIP &&
+            $fails  == $Test::Regexp::TESTS_FAIL &&
+            $skips  == $Test::Regexp::TESTS_SKIP) {
+        $tag = "not ok ";
+        printf "# Got '%d' passes, expected '%d'\n" .
+               "# Got '%d' failures, expected '%d'\n" =>
+            $Test::Regexp::TESTS_PASS, $passes,
+            $Test::Regexp::TESTS_FAIL, $fails;
+        $failures ++;
+    }
+    say $tag, ++ $count, qq { TESTS_PASS and TESTS_FAIL};
+
     $result = "";
 }
 
@@ -53,26 +88,30 @@ while (<DATA>) {
     m {^\h* (?|"(?<subject>[^"]*)"|(?<subject>\S+))
         \h+ (?|/(?<pattern>[^/]*)/|(?<pattern>\S+))
         \h+ (?<match>(?i:[ymn01]))
-        \h+ (?<result>[PF]+)
+        \h+ (?<result>[PFS]+)
         \h* (?:$|\#)}x or next;
-    my ($subject, $pattern, $match, $result) =
+    ($subject, $pattern, my ($match, $result)) =
         @+ {qw [subject pattern match result]};
 
-    my $match_val = $match =~ /[ym1]/i;
+    $match_val = $match =~ /[ym1]/i;
     match subject  =>  $subject,
           pattern  =>  $pattern,
           match    =>  $match_val;
     check $result;
 }
 
+
 #
 # Names in the __DATA__ section come from 'meta norse_mythology'.
 #
 
 __DATA__
-Dagr     ....     y   PP
-Kvasir   Kvasir   y   PP
-Snotra   \w+      y   PP
-Sjofn    \w+      n   F    # It matches, so a no match should fail
-Borr     Bo       y   PF   # Match is only partial
-Magni    Sigyn    y   FP   # Fail, then a skip
+Dagr          ....       y   PPP
+Kvasir        Kvasir     y   PPP
+Snotra        \w+        y   PPP
+Sjofn         \w+        n   F     # It matches, so a no_match should fail
+Borr          Bo         y   PFP   # Match is only partial
+Magni         Sigyn      y   FSS   # Fail, then a skip
+Andhrimnir    Delling    n   P     # Doesn't match, so a pass
+Hlin          .(.)..     y   PPF   # Sets a capture, so should fail
+Od            (?<l>.*)   y   PPF   # Sets a capture, so should fail
