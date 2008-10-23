@@ -201,7 +201,7 @@ sub match {
             }
         }
         else {
-            push @$aa_captures => $match;
+            push @$aa_captures => $capture;
         }
     }
     
@@ -313,7 +313,7 @@ sub match {
                 #
                 for (my $i = 0; $i < @aa_captures; $i ++) {
                     is $numbered_matches [$i], $aa_captures [$i],
-                       "${__}\$$i " . mess $aa_captures [$i];
+                       "${__}\$" . ($i + 1) . " " . mess $aa_captures [$i];
                 }
                 is scalar @numbered_matches, scalar @aa_captures,
                    $__ . @aa_captures . " numbered captured groups";
