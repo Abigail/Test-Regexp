@@ -256,6 +256,18 @@ sub match {
             #
             # Test keep. Should match, and the parts as well.
             #
+            # Total number of tests:
+            #   - 1 for match.
+            #   - 1 for match complete.
+            #   - 1 for each named capture.
+            #   - 1 for each capture name.
+            #   - 1 for number of different capture names.
+            #   - 1 for each capture.
+            #   - 1 for number of captures.
+            # So, if you only have named captures, and all the names
+            # are different, you have 4 + 3 * N tests.
+            # If you only have numbered captures, you have 4 + N tests.
+            #
             SKIP: {
                 my $skips  = 1 + @aa_captures;
                    $skips += @{$_} for values %hh_captures;
@@ -287,6 +299,10 @@ sub match {
                     $minus {$key} = [@$value];
                 }
 
+                #
+                # Test to see if match is complete.
+                #
+                is $amp, $subject, "${__}match is complete";
 
                 #
                 # Test named captures.

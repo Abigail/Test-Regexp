@@ -20,8 +20,11 @@ END {
 use Test::Regexp;
 Test::Regexp -> builder -> plan ('no_plan');
 
+sub init_data;
+
 my $result = "";
 my $count  = 0;
+my @data   = init_data;
 
 END {say "1..$count"}
 
@@ -34,6 +37,7 @@ BEGIN {
     *{"Test::Builder::_print"} = sub {
         my ($self, @msgs) = @_;
         my $mesg = join "" => @msgs;
+        print "## $mesg";
         given ($mesg) {
             when (/^ok/)     {$result .= "P"}
             when (/^not ok/) {$result .= "F"}
@@ -42,7 +46,12 @@ BEGIN {
     #
     # Don't want to see diagnostics.
     #
-    *{"Test::Builder::_print_diag"} = sub {1;}
+    *{"Test::Builder::_print_diag"} = sub {
+        my ($self, @msgs) = @_;
+        my $mesg = join "" => @msgs;
+        print "## $mesg";
+        1;
+    }
 }
 
 my ($subject, $pattern, $match_val);
@@ -81,35 +90,33 @@ sub check {
     $result = "";
 }
 
-while (<DATA>) {
-    chomp;
-    m {^\h* (?|"(?<subject>[^"]*)"|(?<subject>\S+))
-        \h+ (?|/(?<pattern>[^/]*)/|(?<pattern>\S+))
-        \h+ (?<match>(?i:[ymn01]))
-        \h+ (?<result>[PFS]+)
-        \h* (?:$|\#)}x or next;
-    ($subject, $pattern, my ($match, $result)) =
-        @+ {qw [subject pattern match result]};
+foreach my $data (@data) {
+    ($subject, $pattern, my ($match, $result, $captures)) = @$data;
 
     $match_val = $match =~ /[ym1]/i;
-    match subject  =>  $subject,
-          pattern  =>  $pattern,
-          match    =>  $match_val;
+    match subject       =>  $subject,
+          keep_pattern  =>  $pattern,
+          match         =>  $match_val,
+          captures      =>  $captures;
     check $result;
 }
 
-
 #
-# Names in the __DATA__ section come from 'meta norse_mythology'.
+# Data taken from 'meta state_flowers'
 #
 
-__DATA__
-Dagr          ....       y   PPP
-Kvasir        Kvasir     y   PPP
-Snotra        \w+        y   PPP
-Sjofn         \w+        n   F     # It matches, so a no_match should fail
-Borr          Bo         y   PFP   # Match is only partial
-Magni         Sigyn      y   FSS   # Fail, then a skip
-Andhrimnir    Delling    n   P     # Doesn't match, so a pass
-Hlin          .(.)..     y   PPF   # Sets a capture, so should fail
-Od            (?<l>.*)   y   PPF   # Sets a capture, so should fail
+sub init_data {(
+    # Match without captures.
+    ['Rose',              qr {\w+},                   'y', 'PPPP', []],
+
+    # Match with just numbered captures.
+    ['Black Eyed Susan',  qr {(\w+)\s+(\w+)\s+(\w+)}, 'y', 'PPPPPPP',
+      [qw [Black Eyed Susan]]],
+
+    # Match with just named captures.
+    ['Sego Lily',         qr {(?<a>\w+)\s+(?<b>\w+)}, 'y', 'PPPPPPPPPP',
+      [[a => 'Sego'], [b => 'Lily']]],
+)}
+
+
+__END__
