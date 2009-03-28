@@ -7,11 +7,9 @@ use warnings;
 no  warnings 'syntax';
 
 use Exporter ();
+use Test::Builder;
 
-use vars qw [$TESTS_FAIL $TESTS_PASS $TESTS_SKIP];
-
-our @EXPORT    = qw [match no_match r_string lorem];
-our @EXPORT_OK = qw [$TESTS_FAIL $TESTS_PASS $TESTS_SKIP];
+our @EXPORT    = qw [match no_match];
 our @ISA       = qw [Exporter Test::More];
 
 sub substitute;
@@ -24,22 +22,19 @@ BEGIN {
     binmode STDOUT, ":utf8";
 }
 
-use Test::More import => [qw [!ok !is !todo !skip]];
+my $Test = Test::Builder -> new;
 
-# 
-# Intercept the call to Test::Builder::caller; this allows us to
-# have the error reported in the file/line it occurs, not in Test/Regexp.pm.
-#
-BEGIN {
-    no strict 'refs';
-    my $orig = *{"Test::Builder::caller"} {CODE};
-    no warnings 'redefine';
-    no warnings 'once';
-    *{"Test::Builder::caller"} = sub {
-        $_ [1] //= $Test::Builder::deepness // 1;
-        goto &$orig;
-    };
+sub import {
+    my $self = shift;
+    my $pkg  = caller;
+
+    $Test -> exported_to ($pkg);
+    $Test -> plan (@_);
+
+    $self -> export_to_level (1, $self, 'match');
+    $self -> export_to_level (1, $self, 'no_match');
 }
+
 
 my $__ = "    ";
 
@@ -77,10 +72,10 @@ sub todo {
 
     my $line           = "";
 
-    if ($arg {show_line}) {
-        my ($file, $l_nr)  = (caller ($Test::Builder::deepness // 1)) [1, 2];
-        $line = " [$file:$l_nr]";
-    }
+ #  if ($arg {show_line}) {
+ #      my ($file, $l_nr)  = (caller ($Test::Builder::deepness // 1)) [1, 2];
+ #      $line = " [$file:$l_nr]";
+ #  }
 
     my $subject_pretty = pretty $subject;
     my $Comment        = qq {qq {$subject_pretty}};
@@ -125,20 +120,6 @@ sub todo {
 }
     
 
-sub ok {
-    my $c = &Test::More::ok (@_);   # Bypass ok's prototype.
-   ($c ? $TESTS_PASS : $TESTS_FAIL) ++;
-    $c;
-}
-sub is {
-    my $c = &Test::More::is (@_);   # Bypass is's prototype.
-   ($c ? $TESTS_PASS : $TESTS_FAIL) ++;
-    $c;
-}
-sub skip {
-    $TESTS_SKIP += $_ [1];
-    goto &Test::More::skip;
-}
 
 #
 # Arguments:
@@ -178,10 +159,6 @@ sub match {
                                        : "";
     my $show_line      = $arg {show_line};
     my $style          = $arg {style} // "";
-
-    $TESTS_FAIL        = 0;
-    $TESTS_PASS        = 0;
-    $TESTS_SKIP        = 0;
 
     $show_line       //= 1 if $style eq 'Regexp::Common';
 
@@ -247,9 +224,12 @@ sub match {
             #
             SKIP: {
                 my $result = $subject =~ /^$pattern/;
-                skip "Match failed", 2 unless ok $result, $comment;
-                is $&, $subject, "${__}match is complete";
-                ok @- == 1 && keys %- == 0, "${__}no captures";
+                unless ($Test -> ok ($result, $comment)) {
+                    $Test -> skip ("Match failed") for 1 .. 2;
+                    last SKIP;
+                }
+                $Test -> is_eq ($&, $subject, "${__}match is complete");
+                $Test -> ok (@- == 1 && keys %- == 0, "${__}no captures");
             }
         }
         if ($match && defined $keep_pattern) {
@@ -275,8 +255,10 @@ sub match {
                 my ($amp, @numbered_matches, %minus);
 
                 my $result = $subject =~ /^$keep_pattern/;
-                skip "Match failed" => $skips unless
-                    ok $result, "$comment (with -Keep)";
+                unless ($Test -> ok ($result, "$comment (with -Keep)")) {
+                    $Test -> skip ("Match failed") for 1 .. $skips;
+                    last SKIP;
+                }
                 #
                 # Copy $&, $N and %- before doing anything that
                 # migh override them.
@@ -302,51 +284,49 @@ sub match {
                 #
                 # Test to see if match is complete.
                 #
-                is $amp, $subject, "${__}match is complete";
+                $Test -> is_eq ($amp, $subject, "${__}match is complete");
 
                 #
                 # Test named captures.
                 #
                 while (my ($key, $value) = each %hh_captures) {
                     for (my $i = 0; $i < @$value; $i ++) {
-                        is $minus {$key} [$i], $$value [$i],
-                           "${__}\$- {$key} [$i] " . mess $$value [$i];
+                        $Test -> is_eq ($minus {$key} [$i], $$value [$i],
+                           "${__}\$- {$key} [$i] " . mess $$value [$i]);
                     }
-                    is scalar @{$minus {$key}}, scalar @$value, 
+                    $Test -> is_num (scalar @{$minus {$key}}, scalar @$value, 
                            "${__} capture '$key' has " . @$value .
-                           " matches";
+                           " matches");
                 }
                 #
                 # Test for the right number of captures.
                 #
-                is scalar keys %minus, scalar keys %hh_captures,
+                $Test -> is_num (scalar keys %minus, scalar keys %hh_captures,
                    $__ . scalar (keys %hh_captures)
-                       . " named capture groups";
+                       . " named capture groups");
 
 
                 #
                 # Test numbered captures.
                 #
                 for (my $i = 0; $i < @aa_captures; $i ++) {
-                    is $numbered_matches [$i], $aa_captures [$i],
-                       "${__}\$" . ($i + 1) . " " . mess $aa_captures [$i];
+                    $Test -> is_eq ($numbered_matches [$i], $aa_captures [$i],
+                       "${__}\$" . ($i + 1) . " " . mess $aa_captures [$i]);
                 }
-                is scalar @numbered_matches, scalar @aa_captures,
-                   $__ . @aa_captures . " numbered captured groups";
+                $Test -> is_num (scalar @numbered_matches, scalar @aa_captures,
+                   $__ . @aa_captures . " numbered captured groups");
             }
         }
 
         if (!$match && defined $pattern) {
             my $r = $subject =~ /^$pattern/;
-            ok !$r || $subject ne $&, "$comment$reason";
+            $Test -> ok (!$r || $subject ne $&, "$comment$reason");
         }
         if (!$match && defined $keep_pattern) {
             my $r = $subject =~ /^$keep_pattern/;
-            ok !$r || $subject ne $&, "$comment (with -Keep)$reason";
+            $Test -> ok (!$r || $subject ne $&, "$comment (with -Keep)$reason");
         }
     }
-
-    !$TESTS_FAIL;
 }
 
 sub no_match {
@@ -354,103 +334,6 @@ sub no_match {
     goto &match;
 }
 
-
-
-use charnames ();
-sub _u {map {chr} grep {charnames::viacode ($_)} @_}
-
-sub r_string {
-    state $latin = [map {chr} 0x20 .. 0x7F, 0xA0 .. 0xFF];
-    state $uni   = [
-        [_u 0x0020 .. 0x007F, 0x00A0 .. 0x00FF],   # Latin-1
-        [_u 0x0100 .. 0x02AD,                      # More Latin-1
-            0x1E00 .. 0x1EFF],                     # ... and more
-        [_u 0x0384 .. 0x03E1,                      # Greek
-            0x1F00 .. 0x1FFE],                     # ... and more
-        [_u 0x0400 .. 0x0482, 0x048A .. 0x0513],   # Cyrillic
-        [_u 0x0530 .. 0x058A],                     # Armenian
-        [_u 0x05D0 .. 0x05F4],                     # Hebrew
-        [_u 0x0621 .. 0x064A, 0x0660 .. 0x0669],   # Arabic
-        [_u 0x0E01 .. 0x0E5B],                     # Thai
-        [_u 0x10D0 .. 0x10F8],                     # Gregorian
-        [_u 0x11A8 .. 0x11C2],                     # Hangul
-        [_u 0x1680 .. 0x169C],                     # Ogham
-        [_u 0x16A0 .. 0x16F0],                     # Runic
-        [_u 0x2200 .. 0x23BD],                     # Math symbols
-        [_u 0x23BE .. 0x23CC],                     # Dentistry symbols
-        [_u 0x2800 .. 0x28FF],                     # Braille
-        [_u 0x3041 .. 0x3093],                     # Hiragana
-        [_u 0x30A1 .. 0x30F6],                     # Katakana
-
-        [_u 0x2010 .. 0x2027,                      # Symbols, sign, misc stuff
-            0x2030 .. 0x2052,
-            0x2070 .. 0x208E,
-            0x20A0 .. 0x20B1,
-            0x2100 .. 0x21FF,
-            0x2400 .. 0x2426,
-            0x2440 .. 0x2441,
-            0x2460 .. 0x2486,
-            0x2500 .. 0x2689,
-            0x2701 .. 0x2767,
-            0x2778 .. 0x27A7,
-            0x27F5 .. 0x27FF,
-            0xFE30 .. 0xFE69,
-            0xFF01 .. 0xFF5F,
-            0xFFE0 .. 0xFFE6,
-        ],
-    ];
-
-    my %arg = @_;
-    my $min_l = $arg {min} //  3;
-    my $max_l = $arg {max} // 10;
-
-    my $index = $arg {unicode} ? int rand @$uni : 0;
-    my $chars = $$uni [$index];
-
-  again:
-    my $str;
-
-    $str .= $$chars [rand @$chars] for 1 .. $min_l + rand ($max_l - $min_l);
-
-    if ($arg {exclude}) {
-        my $pat = $arg {exclude};
-        $str =~ s/$pat//g;
-        goto again if length $str < $min_l;
-    }
-
-    $str;
-}
-
-my @LOREM = grep {/\S/} split ' ' =><< '--';
-    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-    eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-    enim ad minim veniam, quis nostrud exercitation ullamco laboris
-    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-    pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-    culpa qui officia deserunt mollit anim id est laborum.
---
-
-#
-# Give back a bunch of random ASCII text.
-#
-sub lorem {
-    my %arg = @_;
-    $arg {lines} = 1 unless wantarray;
-    my @lorem;
-
-    $lorem [0] = join ' ' => @LOREM [0 .. 18] if wantarray;
-
-    foreach my $c (1 .. $arg {lines} // 10) {
-        my $i = int rand @LOREM;
-        my $j = int rand @LOREM;
-        redo if $i == $j;
-        ($i, $j)  = ($j, $i) if $j < $i;
-        push @lorem => join ' ' => @LOREM [$i .. $j];
-    }
-
-    wantarray ? @lorem : $lorem [0];
-}
 
 
 
