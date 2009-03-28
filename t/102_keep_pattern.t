@@ -10,15 +10,6 @@ use 5.010;
 
 our $VERSION = 1.000;
 
-my $failures = 0;
-
-#
-# This end block should preceed the use of Test::Regexp.
-#
-END {
-    Test::Builder::_my_exit ($failures > 254 ? 254 : $failures)
-};
-
 use Test::Regexp 'no_plan';
 
 sub init_data;
@@ -33,9 +24,10 @@ foreach my $data (@data) {
     match subject       =>  $subject,
           keep_pattern  =>  $pattern,
           match         =>  $match_val,
+          show_line     =>   1,
           captures      =>  $captures;
     
-    $failures ++ unless check ($expected, $subject, $match_val, $pattern);
+    check ($expected, $subject, $match_val, $pattern);
 }
 
 #

@@ -11,12 +11,19 @@ our $VERSION = 1.000;
 use Test::Builder ();
 use Exporter ();
 
-our @EXPORT = qw [check];
-our @ISA    = qw [Exporter];
+our @EXPORT  = qw [check];
+our @ISA     = qw [Exporter];
 
-my $result = "";
-my $count  = 0;
+my $result   = "";
+my $count    = 0;
+my $failures = 0;
 
+END {
+    Test::Builder::_my_exit ($failures > 254 ? 254 : $failures);
+    no strict 'refs';
+    no warnings 'redefine';
+ *{"Test::Builder::_my_exit"} = sub {1;}
+};
 END {say "1..$count"}
 
 {
@@ -47,6 +54,7 @@ END {say "1..$count"}
     }
 }
 
+
 sub check {
     my ($expected, $subject, $match_val, $pattern) = @_;
     my $tag      = "ok ";
@@ -62,6 +70,7 @@ sub check {
     my $op = $match_val ? "=~" : "!~";
     say $tag, ++ $count, qq { "$subject" $op /$pattern/};
     $result = "";
+    $failures ++ unless $pass;
     return $pass;
 }
 
