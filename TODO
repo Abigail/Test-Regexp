@@ -1,4 +1,3 @@
-- Tests for utf8_upgrade/utf8_downgrade.
 - Tests for reason.
 - Tests for show_line.
 - Tests for style.

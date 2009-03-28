@@ -39,7 +39,7 @@ sub escape {
     $str =~ s/\n/\\n/g;
     $str =~ s/\t/\\t/g;
     $str =~ s/\r/\\r/g;
-    $str =~ s/(\p{C})/sprintf "\\x{%02X}" => ord $1/eg;
+    $str =~ s/([^\x20-\x7E])/sprintf "\\x{%02X}" => ord $1/eg;
     $str;
 }
 
@@ -130,7 +130,7 @@ sub todo {
 #                  of the capture and the second its value.
 #   comment:       Comment to use, default to name or "".
 #   utf8_upgrade:  If set, upgrade the string if applicable. Defaults to 1.
-#   utf_downgrade  If set, downgrade the string if applicable. Defaults to 1.
+#   utf8_downgrade If set, downgrade the string if applicable. Defaults to 1.
 #   match          If true, pattern(s) should match, otherwise, should fail
 #                  to match. Defaults to 1.
 #   reason         The reason a match should fail.
