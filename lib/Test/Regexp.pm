@@ -12,10 +12,6 @@ use Test::Builder;
 our @EXPORT    = qw [match no_match];
 our @ISA       = qw [Exporter Test::More];
 
-sub substitute;
-sub lorem;
-sub r_string;
-
 our $VERSION = '0.01';
 
 BEGIN {
@@ -72,10 +68,11 @@ sub todo {
 
     my $line           = "";
 
- #  if ($arg {show_line}) {
- #      my ($file, $l_nr)  = (caller ($Test::Builder::deepness // 1)) [1, 2];
- #      $line = " [$file:$l_nr]";
- #  }
+    if ($arg {show_line}) {
+        no warnings 'once';
+        my ($file, $l_nr)  = (caller ($Test::Builder::deepness // 1)) [1, 2];
+        $line = " [$file:$l_nr]";
+    }
 
     my $subject_pretty = pretty $subject;
     my $Comment        = qq {qq {$subject_pretty}};
