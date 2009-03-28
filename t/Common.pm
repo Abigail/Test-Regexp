@@ -11,12 +11,14 @@ our $VERSION = 1.000;
 use Test::Builder ();
 use Exporter ();
 
-our @EXPORT  = qw [check];
-our @ISA     = qw [Exporter];
+our @EXPORT    = qw [check];
+our @EXPORT_OK = qw [$count $comment $failures];
+our @ISA       = qw [Exporter];
 
-my $result   = "";
-my $count    = 0;
-my $failures = 0;
+my  $result    = "";
+our $count     = 0;
+our $failures  = 0;
+our $comment;
 
 END {
     Test::Builder::_my_exit ($failures > 254 ? 254 : $failures);
@@ -39,6 +41,9 @@ END {say "1..$count"}
         given ($mesg) {
             when (/^ok/)     {$result .= "P"}
             when (/^not ok/) {$result .= "F"}
+        }
+        if (!defined $comment && $mesg =~ /matched by "(.*)"/) {
+            $comment = $1;
         }
     };
     #
