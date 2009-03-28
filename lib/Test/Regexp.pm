@@ -367,3 +367,31 @@ string and performs the tests again, if necessary. Furthermore, given a
 pattern with capturing parenthesis, it checks whether all captures are
 present, and in the right order. Both named and unnamed captures are checked.
 
+By default, the module exports two subroutines, C<< match >> and
+C<< no_match >>. The latter is actually a thin wrapper around C<< match >>,
+calling it with C<< match => 0 >>.
+
+=head2 "Complete matching"
+
+A match is only considered to succesfully match if the entire string
+is matched - that is, if C<< $& >> matches the subject string. So:
+
+  Subject    Pattern
+
+  "aaabb"    qr /a+b+/     # Considered ok
+  "aaabb"    qr /a+/       # Not considered ok
+
+For efficiency reasons, when the matching is performed the pattern
+is actually anchored at the start. It's not anchored at the end as
+that would potentially influence the matching.
+
+=head2 UTF8 matching
+
+Certain regular expression constructs match differently depending on 
+whether UTF8 matching is in effect or not. This is only relevant 
+if the subject string has characters with code points between 128 and
+255, and no characters above 255 -- in such a case, matching may be
+different depending on whether the subject string has the UTF8 flag
+on or not. C<< Test::Regexp >> detects such a case, and will then 
+run the tests twice; once with the subject string C<< utf8::downgraded >>,
+and once with the subject string C<< utf8::upgraded >>.
