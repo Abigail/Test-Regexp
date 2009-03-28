@@ -17,8 +17,7 @@ END {
     Test::Builder::_my_exit ($failures > 254 ? 254 : $failures)
 };
 
-use Test::Regexp;
-Test::Regexp -> builder -> plan ('no_plan');
+use Test::Regexp 'no_plan';
 
 my $result = "";
 my $count  = 0;
@@ -34,15 +33,23 @@ BEGIN {
     *{"Test::Builder::_print"} = sub {
         my ($self, @msgs) = @_;
         my $mesg = join "" => @msgs;
+        print "## $mesg";
         given ($mesg) {
             when (/^ok/)     {$result .= "P"}
             when (/^not ok/) {$result .= "F"}
         }
     };
     #
-    # Don't want to see diagnostics.
+    # Mark diagnostics.
     #
-    *{"Test::Builder::_print_diag"} = sub {1;}
+    *{"Test::Builder::_print_diag"} = sub {
+        my ($self, @msgs)  = @_;
+        my $mesg = join "" => @msgs;
+        $mesg =~ s/^/   /mg;
+        $mesg =~ s/^  /##/;
+        print $mesg;
+        1;
+    }
 }
 
 my ($subject, $pattern, $match_val);
@@ -59,27 +66,10 @@ sub check {
     }
     my $op = $match_val ? "=~" : "!~";
     say $tag, ++ $count, qq { "$subject" $op /$pattern/};
-
-    my $passes = $expected =~ y/P//;
-    my $fails  = $expected =~ y/F//;
-    my $skips  = $expected =~ y/S//;
-    $tag = "ok ";
-    unless ($passes == $Test::Regexp::TESTS_PASS &&
-            $fails  == $Test::Regexp::TESTS_FAIL &&
-            $skips  == $Test::Regexp::TESTS_SKIP) {
-        $tag = "not ok ";
-        printf "# Got '%d' passes, expected '%d'\n"   .
-               "# Got '%d' failures, expected '%d'\n" .
-               "# Got '%d' skips, expected '%d'\n"    =>
-            $Test::Regexp::TESTS_PASS, $passes,
-            $Test::Regexp::TESTS_FAIL, $fails,
-            $Test::Regexp::TESTS_SKIP, $skips;
-        $failures ++;
-    }
-    say $tag, ++ $count, qq { TESTS_PASS, TESTS_FAIL and TESTS_SKIP};
-
     $result = "";
+    return;
 }
+
 
 while (<DATA>) {
     chomp;
