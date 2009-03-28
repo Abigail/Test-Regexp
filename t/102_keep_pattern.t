@@ -4,6 +4,8 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
+use t::Common;
+
 use 5.010;
 
 our $VERSION = 1.000;
@@ -21,67 +23,19 @@ use Test::Regexp 'no_plan';
 
 sub init_data;
 
-my $result = "";
-my $count  = 0;
 my @data   = init_data;
 
-END {say "1..$count"}
-
-BEGIN {
-    no strict 'refs';
-    no warnings 'redefine';
-    #
-    # Intercept the 'ok' and 'not ok' prints, and remember the results.
-    #
-    *{"Test::Builder::_print"} = sub {
-        my ($self, @msgs) = @_;
-        my $mesg = join "" => @msgs;
-        print "## $mesg";
-        given ($mesg) {
-            when (/^ok/)     {$result .= "P"}
-            when (/^not ok/) {$result .= "F"}
-        }
-    };
-    #
-    # Mark diagnostics.
-    #
-    *{"Test::Builder::_print_diag"} = sub {
-        my ($self, @msgs) = @_;
-        my $mesg = join "" => @msgs;
-        $mesg =~ s/^/   /mg;
-        $mesg =~ s/^  /##/;
-        print $mesg;
-        1;
-    }
-}
-
-my ($subject, $pattern, $match_val);
-sub check {
-    my $expected = shift;
-    my $tag      = "ok ";
-    my $exp_pat  = $expected;
-       $exp_pat  =~ s/S/P/g;
-    if ($result !~ /^$exp_pat$/) {
-        say "# Got '$result'";
-        say "# Expected '$expected'";
-        $tag = "not $tag";
-        $failures ++;
-    }
-    my $op = $match_val ? "=~" : "!~";
-    say $tag, ++ $count, qq { "$subject" $op /$pattern/};
-    $result = "";
-    return;
-}
 
 foreach my $data (@data) {
-    ($subject, $pattern, my ($match, $result, $captures)) = @$data;
+    my ($subject, $pattern, $match, $expected, $captures) = @$data;
 
-    $match_val = $match =~ /[ym1]/i;
+    my $match_val = $match =~ /[ym1]/i;
     match subject       =>  $subject,
           keep_pattern  =>  $pattern,
           match         =>  $match_val,
           captures      =>  $captures;
-    check $result;
+    
+    $failures ++ unless check ($expected, $subject, $match_val, $pattern);
 }
 
 #
