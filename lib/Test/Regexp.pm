@@ -333,9 +333,37 @@ sub no_match {
 }
 
 
-
-
-
 1;
 
 __END__
+
+=pod
+
+=head1 NAME 
+
+Test::Regexp - Test your regular expressions
+
+=head1 SYNOPSIS
+
+ use Test::Regexp 'no_plan';
+
+ match    subject      => "Foo",
+          pattern      => qr /\w+/;
+
+ match    subject      => "Foo bar",
+          keep_pattern => qr /(?<first_word>\w+)\s+(\w+)/,
+          captures     => [[first_word => 'Foo'], ['bar']];
+
+ no_match subject      => "Baz",
+          pattern      => qr /Quux/;
+
+=head1 DESCRIPTION
+
+This module is intended to test your regular expressions. Given a subject
+string and a regular expression (aka pattern), the module not only tests
+whether the regular expression complete matches the subject string, it
+performs a C<< utf8::upgrade >> or C<< utf8::downgrade >> on the subject
+string and performs the tests again, if necessary. Furthermore, given a
+pattern with capturing parenthesis, it checks whether all captures are
+present, and in the right order. Both named and unnamed captures are checked.
+
