@@ -9,8 +9,8 @@ no  warnings 'syntax';
 use Exporter ();
 use Test::Builder;
 
-our @EXPORT    = qw [match no_match];
-our @ISA       = qw [Exporter Test::More];
+our @EXPORT = qw [match no_match];
+our @ISA    = qw [Exporter Test::More];
 
 our $VERSION = '0.01';
 
@@ -59,14 +59,14 @@ sub mess {
 
 
 sub todo {
-    my %arg            =  @_;
-    my $subject        =  $arg {subject};
-    my $comment        =  $arg {comment};
-    my $upgrade        =  $arg {upgrade};
-    my $downgrade      =  $arg {downgrade};
-    my $neg            =  $arg {match} ? "" : "not ";
+    my %arg       =  @_;
+    my $subject   =  $arg {subject};
+    my $comment   =  $arg {comment};
+    my $upgrade   =  $arg {upgrade};
+    my $downgrade =  $arg {downgrade};
+    my $neg       =  $arg {match} ? "" : "not ";
 
-    my $line           = "";
+    my $line      = "";
 
     if ($arg {show_line}) {
         no warnings 'once';
