@@ -12,13 +12,14 @@ use Test::Builder ();
 use Exporter ();
 
 our @EXPORT    = qw [check];
-our @EXPORT_OK = qw [$count $comment $failures];
+our @EXPORT_OK = qw [$count $comment $failures $reason];
 our @ISA       = qw [Exporter];
 
 my  $result    = "";
 our $count     = 0;
 our $failures  = 0;
 our $comment;
+our $reason;
 
 END {
     Test::Builder::_my_exit ($failures > 254 ? 254 : $failures);
@@ -44,6 +45,9 @@ END {say "1..$count"}
         }
         if (!defined $comment && $mesg =~ /matched by "(.*)"/) {
             $comment = $1;
+        }
+        if (!defined $reason  && $mesg =~ /\[Reason: (.*)\]/)  {
+            $reason  = $1;
         }
     };
     #

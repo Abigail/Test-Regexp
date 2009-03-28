@@ -152,7 +152,8 @@ sub match {
     my $upgrade        = $arg {utf8_upgrade}   // 1;
     my $downgrade      = $arg {utf8_downgrade} // 1;
     my $match          = $arg {match}          // 1;
-    my $reason         = $arg {reason} ? " [Reason: " . $arg {reason} . "]"
+    my $reason         = defined $arg {reason}
+                                       ? " [Reason: " . $arg {reason} . "]"
                                        : "";
     my $show_line      = $arg {show_line};
     my $style          = $arg {style} // "";
