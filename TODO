@@ -1,7 +1,11 @@
-- Tests for comment argument.
 - Tests for utf8_upgrade/utf8_downgrade.
 - Tests for reason.
 - Tests for show_line.
 - Tests for style.
 
 - DOCUMENTATION!
+
+=============
+
+- Do something sensible when no comment is given.
+- Use nested tests.
