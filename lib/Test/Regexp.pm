@@ -226,12 +226,12 @@ sub match {
         }
     }
 
-    my @todo           = todo subject   => $subject,
-                              comment   => $comment,
-                              upgrade   => $upgrade,
-                              downgrade => $downgrade,
-                              match     => $match,
-                              show_line => $show_line;
+    my @todo = todo subject   => $subject,
+                    comment   => $comment,
+                    upgrade   => $upgrade,
+                    downgrade => $downgrade,
+                    match     => $match,
+                    show_line => $show_line;
 
     #
     # Now we will do the tests.
