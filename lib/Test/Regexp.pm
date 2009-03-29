@@ -542,3 +542,46 @@ test.
 =item C<< style => STRING >>
 
 A for now undocumentated feature, and subject to change.
+
+=back
+
+=head2 C<< no_match >>
+
+Similar to C<< match >>, except that it tests whether a pattern does
+B<< not >> match a string. Accepts the same arguments as C<< match >>,
+except for C<< match >>.
+
+=head1 RATIONALE
+
+The reason C<< Test::Regexp >> was created is to aid testing for
+the rewrite of C<< Regexp::Common >>.
+
+=head1 DEVELOPMENT
+
+The current sources of this module will be found on github.
+
+=head1 AUTHOR
+
+Abigail L<< <test-regexp@abigail.be> >>
+
+=head1 COPYRIGHT and LICENSE
+
+Copyright (C) 2009, Abigail
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+      
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+      
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
