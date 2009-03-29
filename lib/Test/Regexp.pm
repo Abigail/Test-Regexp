@@ -142,7 +142,7 @@ sub todo {
 #                  (match for the corresponding numbered capture),
 #                  or an array, where the first element is the name
 #                  of the capture and the second its value.
-#   comment:       Comment to use, default to name or "".
+#   comment:       Comment to use, defaults to name or "".
 #   utf8_upgrade:  If set, upgrade the string if applicable. Defaults to 1.
 #   utf8_downgrade If set, downgrade the string if applicable. Defaults to 1.
 #   match          If true, pattern(s) should match, otherwise, should fail
@@ -417,8 +417,102 @@ depends on the number of captures, the number of different names of
 captures, and whether there is the need to up- or downgrade the 
 subject string.
 
-It is therefore recommended to use C<< use Text::Regexp 'no_plan'; >>.
+It is therefore recommended to use
+C<< use Text::Regexp tests => 'no_plan'; >>.
 In a later version, C<< Test::Regexp >> will use a version of 
 C<< Test::Builder >> that allows for nested tests.
 
+=head2 C<< use >> options
 
+When using C<< Test::Regexp >>, there are a few options you can
+give it.
+
+=over 4
+
+=item C<< tests => 'no_plan' >>, C<< tests => 123 >>
+
+The number of tests you are going to run. Since takes some work to
+figure out how many tests will be run, for now the recommendation
+is to use C<< tests => 'no_plan' >>.
+
+=item C<< import => [methods] >>
+
+By default, the subroutines C<< match >> and C<< no_match >> are 
+exported. If you want to import a subset, use the C<< import >>
+tag, and give it an arrayref with the names of the subroutines to
+import.
+
+=back
+
+=head2 C<< match >>
+
+The subroutine C<< match >> is the workhorse of the module. It takes
+a number of named arguments, most of them optional, and runs one or
+more tests. The following options are available:
+
+=over 4
+
+=item C<< subject => STRING >>
+
+The string against which the pattern is tested is passed to C<< match >>
+using the C<< subject >> option. It's an error to not pass in a subject.
+
+=item C<< pattern => PATTERN >>, C<< keep_pattern => PATTERN >>
+
+A pattern (aka regular expression) to test can be passed with one of
+C<< pattern >> or C<< keep_pattern >>. The former should be used if the
+pattern does not have any matching parenthesis; the latter if the pattern
+does have capturing parenthesis. If both C<< pattern >> and C<< keep_pattern >>
+are provided, the subject is tested against both. It's an error to not give
+either C<< pattern >> or C<< keep_pattern >>.
+
+=item C<< captures => [LIST] >>
+
+If a regular expression is passed with C<< keep_pattern >> you should 
+pass in a list of captures using the C<< captures >> option.
+
+This list should contain all the captures, in order. For unnamed captures,
+this should just be the string matched by the capture; for a named capture,
+this should be a two element array, the first element being the name of
+the capture, the second element the capture. Named and unnamed captures
+may be mixed, and the same name for a capture may be repeated.
+
+Example:
+
+ match  subject      =>  "Eland Wapiti Caribou",
+        keep_pattern =>  qr /(\w+)\s+(?<a>\w+)\s+(\w+)/,
+        captures     =>  ["Eland", [a => "Wapiti"], "Caribou"];
+
+=item C<< name => NAME >>
+
+The "name" of the test. It's being used in the test comment.
+
+=item C<< comment => NAME >>
+
+An alternative for C<< name >>. If both are present, C<< comment >> is used.
+
+=item C<< utf8_upgrade => 0 >>, C<< utf8_downgrade => 0 >>
+
+As explained in L<< /UTF8 matching >>, C<< Test::Regexp >> detects whether
+a subject may provoke different matching depending on its UTF8 flag, and
+then it C<< utf8::upgrades >> or C<< utf8::downgrades >> the subject
+string and runs the test again. Setting C<< utf8_upgrade >> to 0 prevents
+C<< Test::Regexp >> from downgrading the subject string, while 
+setting C<< utf8_upgrade >> to 0 prevents C<< Test::Regexp >> from 
+upgrading the subject string.
+
+=item C<< match => BOOLEAN >>
+
+By default, C<< match >> assumes the pattern should match. But it also 
+important to test which strings do not match a regular expression. This
+can be done by calling C<< match >> with C<< match => 0 >> as parameter.
+(Or by calling C<< no_match >> instead of C<< match >>). In this case,
+the test is a failure if the pattern completely matches the subject 
+string. A C<< captures >> argument is ignored. 
+
+=item C<< reason => STRING >>
+
+If the match is expected to fail (so, when C<< match => 0 >> is passed,
+or if C<< no_match >> is called), a reason may be provided with the
+C<< reason >> option. The reason is then printed in the comment of the
+test.
