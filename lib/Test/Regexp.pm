@@ -19,8 +19,6 @@ BEGIN {
 }
 
 
-
-
 my $Test = Test::Builder -> new;
 
 sub import {
@@ -393,29 +391,42 @@ sub init {
     my $self = shift;
     my %arg  = @_;
 
-    $pattern        {$self} = $arg {pattern}
-                    if exists $arg {pattern};
-    $keep_pattern   {$self} = $arg {keep_pattern}
-                    if exists $arg {keep_pattern};
-    $name           {$self} = $arg {name}
-                    if exists $arg {name};
-    $comment        {$self} = $arg {comment}
-                    if exists $arg {comment};
-    $utf8_upgrade   {$self} = $arg {utf8_upgrade}
-                    if exists $arg {utf8_upgrade};
-    $utf8_downgrade {$self} = $arg {utf8_downgrade}
-                    if exists $arg {utf8_downgrade};
-    $match          {$self} = $arg {match}
-                    if exists $arg {match};
-    $reason         {$self} = $arg {reason}
-                    if exists $arg {reason};
-    $show_line      {$self} = $arg {show_line}
-                    if exists $arg {show_line};
-    $style          {$self} = $arg {style}
-                    if exists $arg {style};
+    $pattern        {$self} = $arg {pattern};
+    $keep_pattern   {$self} = $arg {keep_pattern};
+    $name           {$self} = $arg {name};
+    $comment        {$self} = $arg {comment};
+    $utf8_upgrade   {$self} = $arg {utf8_upgrade};
+    $utf8_downgrade {$self} = $arg {utf8_downgrade};
+    $match          {$self} = $arg {match};
+    $reason         {$self} = $arg {reason};
+    $show_line      {$self} = $arg {show_line};
+    $style          {$self} = $arg {style};
 
     $self;
 }
+
+sub match {
+    my  $self = shift;
+    my ($subject, $captures) = @_;
+
+    my  @args = (
+        pattern        => $pattern        {$self},
+        keep_pattern   => $keep_pattern   {$self},
+        name           => $name           {$self},
+        comment        => $comment        {$self},
+        utf8_upgrade   => $utf8_upgrade   {$self},
+        utf8_downgrade => $utf8_downgrade {$self},
+        match          => $match          {$self},
+        show_line      => $show_line      {$self},
+        style          => $style          {$self},
+    );
+
+    Test::Regexp::match subject  => $subject,
+                        captures => $captures,
+                        @args;
+}
+
+
 
 
 1;
