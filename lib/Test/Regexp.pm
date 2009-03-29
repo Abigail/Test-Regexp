@@ -516,3 +516,7 @@ If the match is expected to fail (so, when C<< match => 0 >> is passed,
 or if C<< no_match >> is called), a reason may be provided with the
 C<< reason >> option. The reason is then printed in the comment of the
 test.
+
+=item C<< style => STRING >>
+
+A for now undocumentated feature, and subject to change.
