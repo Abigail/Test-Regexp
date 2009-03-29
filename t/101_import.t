@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-our $VERSION = 1.000;
+our $VERSION = "2009033101";
 
 use Test::More 'no_plan';
 

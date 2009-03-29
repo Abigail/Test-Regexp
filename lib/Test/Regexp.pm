@@ -9,10 +9,10 @@ no  warnings 'syntax';
 use Exporter ();
 use Test::Builder;
 
-our @EXPORT = qw [match no_match];
-our @ISA    = qw [Exporter Test::More];
+our @EXPORT  = qw [match no_match];
+our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '0.01';
+our $VERSION = '2009033101';
 
 BEGIN {
     binmode STDOUT, ":utf8";
