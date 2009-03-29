@@ -10,7 +10,7 @@ use 5.010;
 
 our $VERSION = 1.000;
 
-use Test::Regexp 'no_plan';
+use Test::Regexp tests => 'no_plan';
 
 sub init_data;
 

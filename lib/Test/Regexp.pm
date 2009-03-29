@@ -24,11 +24,25 @@ sub import {
     my $self = shift;
     my $pkg  = caller;
 
-    $Test -> exported_to ($pkg);
-    $Test -> plan (@_);
+    my %arg  = @_;
 
-    $self -> export_to_level (1, $self, 'match');
-    $self -> export_to_level (1, $self, 'no_match');
+    $Test -> exported_to ($pkg);
+
+    $arg {import} //= [qw [match no_match]];
+
+    while (my ($key, $value) = each %arg) {
+        given ($key) {
+            when ("tests") {
+                $Test -> plan ($value);
+            }
+            when ("import") {
+                $self -> export_to_level (1, $self, $_) for @{$value || []};
+            }
+            default {
+                die "Unknown option '$key'\n";
+            }
+        }
+    }
 }
 
 
@@ -395,3 +409,16 @@ different depending on whether the subject string has the UTF8 flag
 on or not. C<< Test::Regexp >> detects such a case, and will then 
 run the tests twice; once with the subject string C<< utf8::downgraded >>,
 and once with the subject string C<< utf8::upgraded >>.
+
+=head2 Number of tests
+
+There's no fixed number of tests that is run. The number of tests
+depends on the number of captures, the number of different names of
+captures, and whether there is the need to up- or downgrade the 
+subject string.
+
+It is therefore recommended to use C<< use Text::Regexp 'no_plan'; >>.
+In a later version, C<< Test::Regexp >> will use a version of 
+C<< Test::Builder >> that allows for nested tests.
+
+
