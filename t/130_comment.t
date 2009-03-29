@@ -28,48 +28,50 @@ sub comment_tests {
     my $Comment = shift;
     undef $comment;
 
-    my @c_args;
-       @c_args = (comment => $Comment) if defined $Comment;
+    foreach my $tag (qw [name comment]) {
+        my @c_args;
+           @c_args = ($tag => $Comment) if defined $Comment;
 
-    undef $comment;
-    match subject  =>  "Foo",
-          pattern  =>  qr {Foo},
-          @c_args;
-    is $comment, $Comment // "", " comment with matching pattern";
+        undef $comment;
+        match subject  =>  "Foo",
+              pattern  =>  qr {Foo},
+              @c_args;
+        is $comment, $Comment // "", " $tag with matching pattern";
     
-    undef $comment;
-    match subject  =>  "Foo",
-          pattern  =>  qr {Bar},
-          @c_args;
-    is $comment, $Comment // "", " comment with non-matching pattern";
+        undef $comment;
+        match subject  =>  "Foo",
+              pattern  =>  qr {Bar},
+              @c_args;
+        is $comment, $Comment // "", " $tag with non-matching pattern";
     
-    undef $comment;
-    match subject       =>  "Foo",
-          keep_pattern  =>  qr {(Foo)},
-          captures      =>  ["Foo"],
-          @c_args;
-    is $comment, $Comment // "", " comment with matching numbered pattern";
+        undef $comment;
+        match subject       =>  "Foo",
+              keep_pattern  =>  qr {(Foo)},
+              captures      =>  ["Foo"],
+              @c_args;
+        is $comment, $Comment // "", " $tag with matching numbered pattern";
     
-    undef $comment;
-    match subject       =>  "Foo",
-          keep_pattern  =>  qr {(?<bar>Foo)},
-          captures      =>  [[bar => "Foo"]],
-          @c_args;
-    is $comment, $Comment // "", " comment with matching named pattern";
+        undef $comment;
+        match subject       =>  "Foo",
+              keep_pattern  =>  qr {(?<bar>Foo)},
+              captures      =>  [[bar => "Foo"]],
+              @c_args;
+        is $comment, $Comment // "", " $tag with matching named pattern";
+        
+        undef $comment;
+        match subject       =>  "Foo",
+              keep_pattern  =>  qr {(Bar)},
+              captures      =>  ["Bar"],
+              @c_args;
+        is $comment, $Comment // "", " $tag with non-matching numbered pattern";
     
-    undef $comment;
-    match subject       =>  "Foo",
-          keep_pattern  =>  qr {(Bar)},
-          captures      =>  ["Bar"],
-          @c_args;
-    is $comment, $Comment // "", " comment with non-matching numbered pattern";
-    
-    undef $comment;
-    match subject       =>  "Foo",
-          keep_pattern  =>  qr {(?<bar>Bar)},
-          captures      =>  [[bar => "Bar"]],
-          @c_args;
-    is $comment, $Comment // "", " comment with non-matching named pattern";
+        undef $comment;
+        match subject       =>  "Foo",
+              keep_pattern  =>  qr {(?<bar>Bar)},
+              captures      =>  [[bar => "Bar"]],
+              @c_args;
+        is $comment, $Comment // "", " $tag with non-matching named pattern";
+    }
 }
 
 
