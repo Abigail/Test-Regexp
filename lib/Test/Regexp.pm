@@ -422,6 +422,28 @@ C<< use Text::Regexp tests => 'no_plan'; >>.
 In a later version, C<< Test::Regexp >> will use a version of 
 C<< Test::Builder >> that allows for nested tests.
 
+=head3 Details
+
+The number of tests is as follows: 
+
+If no match is expected (C<< no_match => 0 >>, or C<< no_match >> is used),
+only one test is performed.
+
+Otherwise (we are expecting a match), if C<< pattern >> is used, there
+will be three tests. 
+
+For C<< keep_pattern >>, there will be four tests, plus one tests for
+each capture, an additional test for each named capture, and a test
+for each name used in the set of named captures. So, if there are
+C<< N >> captures, there will be at least C<< 4 + N >> tests, and
+at most C<< 4 + 3 * N >> tests.
+
+If both C<< pattern >> and C<< keep_pattern >> are used, the number of
+tests add up. 
+
+If C<< Test::Regexp >> decides to upgrade or downgrade, the number of 
+tests double.
+
 =head2 C<< use >> options
 
 When using C<< Test::Regexp >>, there are a few options you can
