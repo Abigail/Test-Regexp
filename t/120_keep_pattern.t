@@ -24,7 +24,6 @@ foreach my $data (@data) {
     match subject       =>  $subject,
           keep_pattern  =>  $pattern,
           match         =>  $match_val,
-          show_line     =>   1,
           captures      =>  $captures;
     
     check ($expected, $subject, $match_val, $pattern);
