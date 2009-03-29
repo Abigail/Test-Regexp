@@ -18,6 +18,9 @@ BEGIN {
     binmode STDOUT, ":utf8";
 }
 
+
+
+
 my $Test = Test::Builder -> new;
 
 sub import {
@@ -365,6 +368,53 @@ sub match {
 sub no_match {
     push @_ => match => 0;
     goto &match;
+}
+
+sub new {
+    bless \do {my $var} => "Test::Regexp::Object";
+}
+
+package Test::Regexp::Object;
+
+use Hash::Util::FieldHash qw [fieldhash];
+
+fieldhash my %pattern;
+fieldhash my %keep_pattern;
+fieldhash my %name;
+fieldhash my %comment;
+fieldhash my %utf8_upgrade;
+fieldhash my %utf8_downgrade;
+fieldhash my %match;
+fieldhash my %reason;
+fieldhash my %show_line;
+fieldhash my %style;
+
+sub init {
+    my $self = shift;
+    my %arg  = @_;
+
+    $pattern        {$self} = $arg {pattern}
+                    if exists $arg {pattern};
+    $keep_pattern   {$self} = $arg {keep_pattern}
+                    if exists $arg {keep_pattern};
+    $name           {$self} = $arg {name}
+                    if exists $arg {name};
+    $comment        {$self} = $arg {comment}
+                    if exists $arg {comment};
+    $utf8_upgrade   {$self} = $arg {utf8_upgrade}
+                    if exists $arg {utf8_upgrade};
+    $utf8_downgrade {$self} = $arg {utf8_downgrade}
+                    if exists $arg {utf8_downgrade};
+    $match          {$self} = $arg {match}
+                    if exists $arg {match};
+    $reason         {$self} = $arg {reason}
+                    if exists $arg {reason};
+    $show_line      {$self} = $arg {show_line}
+                    if exists $arg {show_line};
+    $style          {$self} = $arg {style}
+                    if exists $arg {style};
+
+    $self;
 }
 
 
