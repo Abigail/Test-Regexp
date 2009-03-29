@@ -2,3 +2,4 @@
 
 - Do something sensible when no comment is given.
 - Use nested tests.
+- Provide an OO interface
