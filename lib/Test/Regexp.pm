@@ -369,10 +369,14 @@ sub no_match {
 }
 
 sub new {
-    bless \do {my $var} => "Test::Regexp::Object";
+    "Test::Regexp::Object" -> new
 }
 
 package Test::Regexp::Object;
+
+sub new {
+    bless \do {my $var} => shift;
+}
 
 use Hash::Util::FieldHash qw [fieldhash];
 
