@@ -196,8 +196,8 @@ sub match {
         }
     }
     
-    my @aa_captures = @{$aa_captures || []};
-    my %hh_captures = %{$hh_captures || {}};
+    $aa_captures ||= [];
+    $hh_captures ||= {};
 
     given ($arg {style}) {
         when ("Regexp::Common") {
@@ -205,15 +205,15 @@ sub match {
                $Name            =~ s/[^a-zA-Z0-9_]+/_/g;
             my %hh;
             $hh {"${Name}"}     =  [$subject];
-            $hh {"${Name}__$_"} =  $hh_captures {$_}
-                                    for keys %hh_captures;
-            %hh_captures = %hh;
+            $hh {"${Name}__$_"} =  $$hh_captures {$_}
+                                     for keys %$hh_captures;
+            $hh_captures = \%hh;
 
             my @aa = ($subject,
                       map {ref $_ ? ["${Name}__" . $$_ [0], $$_ [1]]
                                   : $_}
-                      @aa_captures);
-            @aa_captures = @aa;
+                      @$aa_captures);
+            $aa_captures = \@aa;
         }
     }
 
@@ -266,8 +266,8 @@ sub match {
             # If you only have numbered captures, you have 4 + N tests.
             #
             SKIP: {
-                my $skips  = 1 + @aa_captures;
-                   $skips += @{$_} for values %hh_captures;
+                my $skips  = 1 + @$aa_captures;
+                   $skips += @{$_} for values %$hh_captures;
 
                 my ($amp, @numbered_matches, %minus);
 
@@ -308,7 +308,7 @@ sub match {
                 #
                 # Test named captures.
                 #
-                while (my ($key, $value) = each %hh_captures) {
+                while (my ($key, $value) = each %$hh_captures) {
                     for (my $i = 0; $i < @$value; $i ++) {
                         $pass = 0 unless
                             $Test -> is_eq ($minus {$key} [$i], $$value [$i],
@@ -324,25 +324,25 @@ sub match {
                 #
                 $pass = 0 unless
                     $Test -> is_num (scalar keys %minus,
-                                     scalar keys %hh_captures,
-                              $__ . scalar (keys %hh_captures)
+                                     scalar keys %$hh_captures,
+                              $__ . scalar (keys %$hh_captures)
                                   . " named capture groups");
 
 
                 #
                 # Test numbered captures.
                 #
-                for (my $i = 0; $i < @aa_captures; $i ++) {
+                for (my $i = 0; $i < @$aa_captures; $i ++) {
                     $pass = 0 unless
                         $Test -> is_eq ($numbered_matches [$i],
-                                        $aa_captures [$i],
+                                        $$aa_captures [$i],
                                        "${__}\$" . ($i + 1) . " " .
-                                        mess $aa_captures [$i]);
+                                        mess $$aa_captures [$i]);
                 }
                 $pass = 0 unless
                     $Test -> is_num (scalar @numbered_matches,
-                                     scalar @aa_captures,
-                                     $__ . @aa_captures .
+                                     scalar @$aa_captures,
+                                     $__ . @$aa_captures .
                                      " numbered captured groups");
             }
         }
