@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use t::Common;
+use t::Common qw [check $count $failures];
 
 use 5.010;
 
@@ -21,10 +21,17 @@ foreach my $data (@data) {
     my ($subject, $pattern, $match, $expected, $captures) = @$data;
 
     my $match_val = $match =~ /[ym1]/i;
-    match subject       =>  $subject,
-          keep_pattern  =>  $pattern,
-          match         =>  $match_val,
-          captures      =>  $captures;
+    my $r = match subject       =>  $subject,
+                  keep_pattern  =>  $pattern,
+                  match         =>  $match_val,
+                  captures      =>  $captures;
+
+    unless ($r && $expected !~ /[^P]/ ||
+           !$r && $expected =~ /[^P]/) {
+        print "not ";
+        $failures ++;
+    }
+    say "ok ", ++ $count, " match() return value";
     
     check ($expected, $subject, $match_val, $pattern);
 }

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use t::Common;
+use t::Common qw [check $count $failures];
 
 use 5.010;
 
@@ -25,9 +25,16 @@ while (<DATA>) {
         @+ {qw [subject pattern match result]};
 
     my $match_val = $match =~ /[ym1]/i;
-    match subject  =>  $subject,
-          pattern  =>  $pattern,
-          match    =>  $match_val;
+    my $r = match subject  =>  $subject,
+                  pattern  =>  $pattern,
+                  match    =>  $match_val;
+
+    unless ($r && $expected !~ /[^P]/ ||
+           !$r && $expected =~ /[^P]/) {
+        print "not ";
+        $failures ++;
+    }
+    say "ok ", ++ $count, " match() return value";
 
     check ($expected, $subject, $match_val, $pattern);
 }

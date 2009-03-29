@@ -177,6 +177,8 @@ sub match {
     my $aa_captures;
     my $hh_captures;
 
+    my $pass           = 1;
+
     #
     # First split the captures into a hash and an array so we can
     # check both $1 and friends, and %-.
@@ -238,10 +240,13 @@ sub match {
                 my $result = $subject =~ /^$pattern/;
                 unless ($Test -> ok ($result, $comment)) {
                     $Test -> skip ("Match failed") for 1 .. 2;
+                    $pass = 0;
                     last SKIP;
                 }
-                $Test -> is_eq ($&, $subject, "${__}match is complete");
-                $Test -> ok (@- == 1 && keys %- == 0, "${__}no captures");
+                $pass = 0 unless
+                    $Test -> is_eq ($&, $subject, "${__}match is complete");
+                $pass = 0 unless
+                    $Test -> ok (@- == 1 && keys %- == 0, "${__}no captures");
             }
         }
         if ($match && defined $keep_pattern) {
@@ -269,6 +274,7 @@ sub match {
                 my $result = $subject =~ /^$keep_pattern/;
                 unless ($Test -> ok ($result, "$comment (with -Keep)")) {
                     $Test -> skip ("Match failed") for 1 .. $skips;
+                    $pass = 0;
                     last SKIP;
                 }
                 #
@@ -296,49 +302,64 @@ sub match {
                 #
                 # Test to see if match is complete.
                 #
-                $Test -> is_eq ($amp, $subject, "${__}match is complete");
+                $pass = 0 unless
+                    $Test -> is_eq ($amp, $subject, "${__}match is complete");
 
                 #
                 # Test named captures.
                 #
                 while (my ($key, $value) = each %hh_captures) {
                     for (my $i = 0; $i < @$value; $i ++) {
-                        $Test -> is_eq ($minus {$key} [$i], $$value [$i],
-                           "${__}\$- {$key} [$i] " . mess $$value [$i]);
+                        $pass = 0 unless
+                            $Test -> is_eq ($minus {$key} [$i], $$value [$i],
+                               "${__}\$- {$key} [$i] " . mess $$value [$i]);
                     }
-                    $Test -> is_num (scalar @{$minus {$key}}, scalar @$value, 
-                           "${__} capture '$key' has " . @$value .
-                           " matches");
+                    $pass = 0 unless
+                        $Test -> is_num (scalar @{$minus {$key}},
+                                 scalar @$value, "${__} capture '$key' has " .
+                                 @$value . " matches");
                 }
                 #
                 # Test for the right number of captures.
                 #
-                $Test -> is_num (scalar keys %minus, scalar keys %hh_captures,
-                   $__ . scalar (keys %hh_captures)
-                       . " named capture groups");
+                $pass = 0 unless
+                    $Test -> is_num (scalar keys %minus,
+                                     scalar keys %hh_captures,
+                              $__ . scalar (keys %hh_captures)
+                                  . " named capture groups");
 
 
                 #
                 # Test numbered captures.
                 #
                 for (my $i = 0; $i < @aa_captures; $i ++) {
-                    $Test -> is_eq ($numbered_matches [$i], $aa_captures [$i],
-                       "${__}\$" . ($i + 1) . " " . mess $aa_captures [$i]);
+                    $pass = 0 unless
+                        $Test -> is_eq ($numbered_matches [$i],
+                                        $aa_captures [$i],
+                                       "${__}\$" . ($i + 1) . " " .
+                                        mess $aa_captures [$i]);
                 }
-                $Test -> is_num (scalar @numbered_matches, scalar @aa_captures,
-                   $__ . @aa_captures . " numbered captured groups");
+                $pass = 0 unless
+                    $Test -> is_num (scalar @numbered_matches,
+                                     scalar @aa_captures,
+                                     $__ . @aa_captures .
+                                     " numbered captured groups");
             }
         }
 
         if (!$match && defined $pattern) {
             my $r = $subject =~ /^$pattern/;
-            $Test -> ok (!$r || $subject ne $&, "$comment$reason");
+            $pass = 0 unless
+                $Test -> ok (!$r || $subject ne $&, "$comment$reason");
         }
         if (!$match && defined $keep_pattern) {
             my $r = $subject =~ /^$keep_pattern/;
-            $Test -> ok (!$r || $subject ne $&, "$comment (with -Keep)$reason");
+            $pass = 0 unless
+                $Test -> ok (!$r || $subject ne $&,
+                             "$comment (with -Keep)$reason");
         }
     }
+    $pass;
 }
 
 sub no_match {
@@ -470,7 +491,8 @@ import.
 
 The subroutine C<< match >> is the workhorse of the module. It takes
 a number of named arguments, most of them optional, and runs one or
-more tests. The following options are available:
+more tests. It returns 1 if all tests were run succesfully, and 0
+if one or more tests failed. The following options are available:
 
 =over 4
 
