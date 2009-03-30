@@ -645,11 +645,12 @@ the rewrite of C<< Regexp::Common >>.
 
 =head1 DEVELOPMENT
 
-The current sources of this module will be found on github.
+The current sources of this module are found on github,
+L<< git://github.com/Abigail/test--regexp.git >>.
 
 =head1 AUTHOR
 
-Abigail L<< <test-regexp@abigail.be> >>
+Abigail L<< <test-regexp@abigail.be> >>.
 
 =head1 COPYRIGHT and LICENSE
 
