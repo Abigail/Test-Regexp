@@ -13,4 +13,3 @@ t/140_utf8.t
 t/150_reason.t
 t/160_show_line.t
 t/Common.pm
-MANIFEST.SKIP
