@@ -1,2 +1,8 @@
+Version 2009040901
+- Modernized Makefile.PL.
+- POD fixes.
+- Added Changes file.
+- Removed $VERSION from test files.
+----
 Version 2009033101
 - Initial release
