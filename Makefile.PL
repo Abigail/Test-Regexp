@@ -12,11 +12,12 @@ my %args = (
     NAME                 => 'Test::Regexp',
     VERSION_FROM         => 'lib/Test/Regexp.pm',
     ABSTRACT_FROM        => 'lib/Test/Regexp.pm',
-    PREREQ_PM            => { },
+    PREREQ_PM            => {'Test::Builder' => 0},
     MIN_PERL_VERSION     =>  5.010,
     AUTHOR               => 'Abigail <test-regexp@abigail.be>',
     LICENSE              => 'mit',
     META_MERGE           => {
+        build_requires   => {'Test::More' => 0},
         resources        => {
             repository   => 'git://github.com/Abigail/test--regexp.git',
         },
