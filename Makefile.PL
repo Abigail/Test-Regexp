@@ -12,7 +12,11 @@ my %args = (
     NAME                 => 'Test::Regexp',
     VERSION_FROM         => 'lib/Test/Regexp.pm',
     ABSTRACT_FROM        => 'lib/Test/Regexp.pm',
-    PREREQ_PM            => {'Test::Builder' => 0},
+    PREREQ_PM            => {
+        'Exporter'              => 0,
+        'Hash::Util::FieldHash' => 0,
+        'Test::Builder'         => 0,
+    },
     MIN_PERL_VERSION     =>  5.010,
     AUTHOR               => 'Abigail <test-regexp@abigail.be>',
     LICENSE              => 'mit',
