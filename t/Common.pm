@@ -6,8 +6,6 @@ no  warnings 'syntax';
 
 use 5.010;
 
-our $VERSION = "2009033101";
-
 use Test::Builder ();
 use Exporter ();
 

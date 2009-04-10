@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2009033101';
+our $VERSION = '2009040901';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -650,11 +650,11 @@ L<< git://github.com/Abigail/test--regexp.git >>.
 
 =head1 AUTHOR
 
-Abigail L<< <test-regexp@abigail.be> >>.
+Abigail L<< mailto:test-regexp@abigail.be >>.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright (C) 2009, Abigail
+Copyright (C) 2009 by Abigail
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -673,3 +673,15 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+=head1 INSTALLATION
+
+To install this module, run, after unpacking the tar-ball, the
+following commands:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+=cut
