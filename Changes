@@ -1,3 +1,6 @@
+Version 2009041001
+- Add OO interface.
+----
 Version 2009040901
 - Modernized Makefile.PL.
 - POD fixes.
