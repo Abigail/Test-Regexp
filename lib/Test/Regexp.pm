@@ -469,6 +469,14 @@ Test::Regexp - Test your regular expressions
  no_match subject      => "Baz",
           pattern      => qr /Quux/;
 
+ $checker = Test::Regexp -> new -> init (
+    keep_pattern => qr /(\w+)\s+\g{-1}/,
+    name         => "Double word matcher",
+ );
+
+ $checker -> match    ("foo foo", ["foo"]);
+ $checker -> no_match ("foo bar");
+
 =head1 DESCRIPTION
 
 This module is intended to test your regular expressions. Given a subject
@@ -649,6 +657,30 @@ A for now undocumentated feature, and subject to change.
 Similar to C<< match >>, except that it tests whether a pattern does
 B<< not >> match a string. Accepts the same arguments as C<< match >>,
 except for C<< match >>.
+
+=head2 OO interface
+
+Since one typically checks a pattern with multiple strings, and it can
+be tiresome to repeatedly call C<< match >> or C<< no_match >> with the
+same arguments, there's also an OO interface. Using a pattern, one constructs
+an object and can then repeatedly call the object to match a string.
+
+To construct and initialize the object, call the following:
+
+ my $checker = Test::Regexp -> new -> init (
+    pattern      => qr  /PATTERN/,
+    keep_pattern => qr /(PATTERN)/,
+    ...
+ );
+
+C<< init >> takes exactly the same arguments as C<< match >>, with the
+exception of C<< subject >> and C<< captures >>. To perform a match,
+all C<< match >> (or C<< no_match >>) on the object. The first argument
+should be the subject the pattern should match against (see the
+C<< subject >> argument of C<< match >> discussed above). If there is a
+match against a capturing pattern, the second argument is a reference
+to an array with the matches (see the C<< captures >> argument of
+C<< match >> discussed above).
 
 =head1 RATIONALE
 
