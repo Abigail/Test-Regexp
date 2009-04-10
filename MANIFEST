@@ -14,6 +14,7 @@ t/140_utf8.t
 t/150_reason.t
 t/160_show_line.t
 t/200_use.t
+t/201_example.t
 t/210_object.t
 t/211_objects.t
 t/220_comment.t
