@@ -409,11 +409,9 @@ sub init {
     $self;
 }
 
-sub match {
+sub args {
     my  $self = shift;
-    my ($subject, $captures) = @_;
-
-    my  @args = (
+    (
         pattern        => $pattern        {$self},
         keep_pattern   => $keep_pattern   {$self},
         name           => $name           {$self},
@@ -423,11 +421,25 @@ sub match {
         match          => $match          {$self},
         show_line      => $show_line      {$self},
         style          => $style          {$self},
-    );
+    )
+}
+
+sub match {
+    my  $self = shift;
+    my ($subject, $captures) = @_;
 
     Test::Regexp::match subject  => $subject,
                         captures => $captures,
-                        @args;
+                        $self    -> args;
+}
+
+sub no_match {
+    my  $self = shift;
+    my ($subject, $captures) = @_;
+
+    Test::Regexp::no_match subject  => $subject,
+                           captures => $captures,
+                           $self    -> args;
 }
 
 
