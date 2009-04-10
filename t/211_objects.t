@@ -8,8 +8,6 @@ use t::Common qw [check $count $failures];
 
 use 5.010;
 
-our $VERSION = "2009033101";
-
 use Test::Regexp tests  => 'no_plan',
                  import => [];
 
