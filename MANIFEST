@@ -19,4 +19,3 @@ t/210_object.t
 t/211_objects.t
 t/220_comment.t
 t/Common.pm
-Changes
