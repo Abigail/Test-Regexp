@@ -1,4 +1,7 @@
 Version 2009041401
+- Added tests for POD and Kwalitee
+----
+Version 2009041401
 - Fixed MANIFEST.
 ----
 Version 2009041001
