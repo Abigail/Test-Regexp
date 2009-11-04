@@ -16,16 +16,23 @@ my %args = (
         'Exporter'              => 0,
         'Hash::Util::FieldHash' => 0,
         'Test::Builder'         => 0,
+        'warnings'              => 0,
+        'strict'                => 0,
     },
     MIN_PERL_VERSION     =>  5.010,
     AUTHOR               => 'Abigail <test-regexp@abigail.be>',
     LICENSE              => 'mit',
     META_MERGE           => {
-        build_requires   => {'Test::More' => 0},
+        test_requires    => {
+            'Test::More' => 0,
+            'warnings'   => 0,
+            'strict'     => 0,
+        },
         resources        => {
             repository   => 'git://github.com/Abigail/test--regexp.git',
         },
-        keywords         => [qw [ ]],
+        keywords         => ['regular expression', 'pattern', 'regexp', 'test',
+                             'tests'],
     },
 );
 
