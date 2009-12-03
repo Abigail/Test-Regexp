@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2009110401';
+our $VERSION = '2009120301';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -312,11 +312,13 @@ sub match {
                 while (my ($key, $value) = each %$hh_captures) {
                     for (my $i = 0; $i < @$value; $i ++) {
                         $pass = 0 unless
-                            $Test -> is_eq ($minus {$key} [$i], $$value [$i],
+                            $Test -> is_eq (
+                                $minus {$key} ? $minus {$key} [$i] : undef,
+                                $$value [$i],
                                "${__}\$- {$key} [$i] " . mess $$value [$i]);
                     }
                     $pass = 0 unless
-                        $Test -> is_num (scalar @{$minus {$key}},
+                        $Test -> is_num (scalar @{$minus {$key} || []},
                                  scalar @$value, "${__} capture '$key' has " .
                                  @$value . " matches");
                 }

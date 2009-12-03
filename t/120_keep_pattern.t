@@ -78,7 +78,7 @@ sub init_data {(
       [qw [Hawaiian Hibiscus]]],
 
     # Numbered capture, named results.
-    ['Cherokee Rose',     qr {(\w+)\s+(\w+)},          'y', 'PPFFFFPPPP',
+    ['Cherokee Rose',     qr {(\w+)\s+(\w+)},          'y', 'PPFFFFFPPP',
       [[a => 'Cherokee'], [b => 'Rose']]],
 
     # Wrong capture names.
