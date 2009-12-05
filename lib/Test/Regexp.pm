@@ -686,6 +686,9 @@ match against a capturing pattern, the second argument is a reference
 to an array with the matches (see the C<< captures >> argument of
 C<< match >> discussed above).
 
+Both C<< match >> and C<< no_match >> can take additional (named) arguments,
+identical to the none-OO C<< match >> and C<< no_match >> routines.
+
 =head1 RATIONALE
 
 The reason C<< Test::Regexp >> was created is to aid testing for
