@@ -17,6 +17,7 @@ t/200_use.t
 t/201_example.t
 t/210_object.t
 t/211_objects.t
+t/212_object_extra_args.t
 t/220_comment.t
 t/950_pod.t
 t/960_pod_coverage.t
