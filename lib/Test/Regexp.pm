@@ -427,21 +427,23 @@ sub args {
 }
 
 sub match {
-    my  $self = shift;
-    my ($subject, $captures) = @_;
+    my  $self     = shift;
+    my  $subject  = shift;
+    my  $captures = @_ % 2 ? shift : undef;
 
     Test::Regexp::match subject  => $subject,
                         captures => $captures,
-                        $self    -> args;
+                        $self    -> args, 
+                        @_;
 }
 
 sub no_match {
-    my  $self = shift;
-    my ($subject, $captures) = @_;
+    my  $self    = shift;
+    my  $subject = shift;
 
     Test::Regexp::no_match subject  => $subject,
-                           captures => $captures,
-                           $self    -> args;
+                           $self    -> args,
+                           @_;
 }
 
 
