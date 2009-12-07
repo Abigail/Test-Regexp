@@ -1,3 +1,6 @@
+Version 2009120801
++ Added 'test' option to 'match'.
+
 Version 2009120501
 + Methods 'match' and 'no_match' can take additional parameters.
 

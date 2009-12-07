@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2009120501';
+our $VERSION = '2009120801';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -149,6 +149,7 @@ sub todo {
 #   match          If true, pattern(s) should match, otherwise, should fail
 #                  to match. Defaults to 1.
 #   reason         The reason a match should fail.
+#   test           What is tested.                  
 #   show_line      Show file name/line number of call to 'match'.
 #
 #   style          If set, do some additional mangling, depending on
@@ -169,6 +170,9 @@ sub match {
     my $match          = $arg {match}          // 1;
     my $reason         = defined $arg {reason}
                                        ? " [Reason: " . $arg {reason} . "]"
+                                       : "";
+    my $test           = defined $arg {test}
+                                       ? " [Test: "   . $arg {test}   . "]"
                                        : "";
     my $show_line      = $arg {show_line};
     my $style          = $arg {style} // "";
@@ -239,7 +243,7 @@ sub match {
             #
             SKIP: {
                 my $result = $subject =~ /^$pattern/;
-                unless ($Test -> ok ($result, $comment)) {
+                unless ($Test -> ok ($result, "$comment$test")) {
                     $Test -> skip ("Match failed") for 1 .. 2;
                     $pass = 0;
                     last SKIP;
@@ -273,7 +277,7 @@ sub match {
                 my ($amp, @numbered_matches, %minus);
 
                 my $result = $subject =~ /^$keep_pattern/;
-                unless ($Test -> ok ($result, "$comment (with -Keep)")) {
+                unless ($Test -> ok ($result, "$comment (with -Keep)$test")) {
                     $Test -> skip ("Match failed") for 1 .. $skips;
                     $pass = 0;
                     last SKIP;
@@ -390,6 +394,7 @@ fieldhash my %utf8_upgrade;
 fieldhash my %utf8_downgrade;
 fieldhash my %match;
 fieldhash my %reason;
+fieldhash my %test;
 fieldhash my %show_line;
 fieldhash my %style;
 
@@ -405,6 +410,7 @@ sub init {
     $utf8_downgrade {$self} = $arg {utf8_downgrade};
     $match          {$self} = $arg {match};
     $reason         {$self} = $arg {reason};
+    $test           {$self} = $arg {test};
     $show_line      {$self} = $arg {show_line};
     $style          {$self} = $arg {style};
 
@@ -421,6 +427,8 @@ sub args {
         utf8_upgrade   => $utf8_upgrade   {$self},
         utf8_downgrade => $utf8_downgrade {$self},
         match          => $match          {$self},
+        reason         => $reason         {$self},
+        test           => $test           {$self},
         show_line      => $show_line      {$self},
         style          => $style          {$self},
     )
@@ -649,6 +657,12 @@ If the match is expected to fail (so, when C<< match => 0 >> is passed,
 or if C<< no_match >> is called), a reason may be provided with the
 C<< reason >> option. The reason is then printed in the comment of the
 test.
+
+=item C<< test => STRING >>
+
+If the match is expected to pass (when C<< match >> is called, without
+C<< match >> being false), and this option is passed, a message is printed
+indicating what this specific test is testing (the argument to C<< test >>).
 
 =item C<< style => STRING >>
 

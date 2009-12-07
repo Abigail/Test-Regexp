@@ -10,7 +10,7 @@ use Test::Builder ();
 use Exporter ();
 
 our @EXPORT    = qw [check];
-our @EXPORT_OK = qw [$count $comment $failures $reason $line];
+our @EXPORT_OK = qw [$count $comment $failures $reason $test $line];
 our @ISA       = qw [Exporter];
 
 my  $result    = "";
@@ -18,6 +18,7 @@ our $count     = 0;
 our $failures  = 0;
 our $comment;
 our $reason;
+our $test;
 our $line;
 
 END {
@@ -42,11 +43,14 @@ END {say "1..$count"}
             when (/^ok/)     {$result .= "P"}
             when (/^not ok/) {$result .= "F"}
         }
-        if (!defined $comment && $mesg =~ /matched by "(.*)"/)   {
+        if (!defined $comment && $mesg =~ /matched by "(.*?)"/)  {
             $comment = $1;
         }
-        if (!defined $reason  && $mesg =~ /\[Reason: (.*)\]/)    {
+        if (!defined $reason  && $mesg =~ /\[Reason: (.*?)\]/)   {
             $reason  = $1;
+        }
+        if (!defined $test    && $mesg =~ /\[Test: (.*?)\]/)     {
+            $test    = $1;
         }
         if (!defined $line    && $mesg =~ /\[([^]:]+:[0-9]+)\]/) {
             $line    = $1;
