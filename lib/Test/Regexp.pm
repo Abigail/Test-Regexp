@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2009120901';
+our $VERSION = '2009120902';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -215,6 +215,11 @@ sub match {
     $aa_captures ||= [];
     $hh_captures ||= {};
 
+    #
+    # Delete trailing undefs.
+    #
+    pop @$aa_captures while @$aa_captures && !defined $$aa_captures [-1];
+
     given ($arg {style}) {
         when ("Regexp::Common") {
             my $Name            =  $name;
@@ -265,15 +270,14 @@ sub match {
                 #
                 my $named_matches  = 0;
                    $named_matches += @$_ for values %-;
-                my $unexpected = $ghost_num_captures + $ghost_name_captures ?
+                my $unexpected = $ghost_num_captures || $ghost_name_captures ?
                                  "unexpected " : "";
                  
                 $pass = 0 unless
                     $Test -> is_eq ($&, $subject, "${__}match is complete");
                 $pass = 0 unless
                     $Test -> is_eq (scalar @-, 
-                                    1 + $ghost_num_captures 
-                                      + $ghost_name_captures,
+                                    1 + $ghost_num_captures,
                                     "${__}no ${unexpected}numbered captures");
                 $pass = 0 unless
                     $Test -> is_eq ($named_matches, $ghost_name_captures,

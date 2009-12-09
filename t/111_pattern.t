@@ -51,5 +51,5 @@ Hodr          .+             0 0 y PPPP
 Magni         .(.)...        1 0 y PPPP    #  Ghost capture.
 Frigg         .(.).(.).+     2 0 y PPPP    #  Double capture.
 Heimdall      .((.)).+       2 0 y PPPP    #  Nested capture.
-Ran           .(?<l>.).      0 1 y PPPP    #  Ghost named capture.
-Elli          .(.)(?<l>.).   1 1 y PPPP    #  Both numbered and named capture.
+Ran           .(?<l>.).      1 1 y PPPP    #  Ghost named capture.
+Elli          .(.)(?<l>.).   2 1 y PPPP    #  Both numbered and named capture.
