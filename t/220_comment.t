@@ -27,8 +27,8 @@ my @checkers = (
 );
 
 my @data = (
-    ['PPPPPPPPP',   [qw [Gerald Ford]]],
-    ['PPPPPPPPP',   [qw [Jimmy Carter]]],
+    ['PPPPPPPPPP',   [qw [Gerald Ford]]],
+    ['PPPPPPPPPP',   [qw [Jimmy Carter]]],
 );
 
 foreach my $data (@data) {

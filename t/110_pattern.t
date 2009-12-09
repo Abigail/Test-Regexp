@@ -42,12 +42,12 @@ while (<DATA>) {
 #
 
 __DATA__
-Dagr          ....       y   PPP
-Kvasir        Kvasir     y   PPP
-Snotra        \w+        y   PPP
+Dagr          ....       y   PPPP
+Kvasir        Kvasir     y   PPPP
+Snotra        \w+        y   PPPP
 Sjofn         \w+        n   F     # It matches, so a no_match should fail
-Borr          Bo         y   PFP   # Match is only partial
+Borr          Bo         y   PFPP  # Match is only partial
 Magni         Sigyn      y   FSS   # Fail, then a skip
 Andhrimnir    Delling    n   P     # Doesn't match, so a pass
-Hlin          .(.)..     y   PPF   # Sets a capture, so should fail
-Od            (?<l>.*)   y   PPF   # Sets a capture, so should fail
+Hlin          .(.)..     y   PPFP  # Sets a capture, so should fail
+Od            (?<l>.*)   y   PPFF  # Sets a capture, so should fail

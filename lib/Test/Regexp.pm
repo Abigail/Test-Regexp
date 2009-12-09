@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2009120801';
+our $VERSION = '2009120901';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -177,6 +177,9 @@ sub match {
     my $show_line      = $arg {show_line};
     my $style          = $arg {style} // "";
 
+    my $ghost_num_captures  = $arg {ghost_num_captures}  // 0;
+    my $ghost_name_captures = $arg {ghost_name_captures} // 0;
+
     $show_line       //= 1 if $style eq 'Regexp::Common';
 
     my $aa_captures;
@@ -188,11 +191,19 @@ sub match {
     # First split the captures into a hash and an array so we can
     # check both $1 and friends, and %-.
     #
+
+    #
+    # Ghost matches are (named) captures whose name we do not know.
+    #
+    my $ghost_captures = 0;
     foreach my $capture (@$captures) {
         if (ref $capture eq 'ARRAY') {
             my ($name, $match) = @$capture;
             push @$aa_captures => $match;
-            if ($name =~ /^[a-zA-Z0-9_]+$/) {
+            if (!defined $name) {
+                $ghost_captures ++;
+            }
+            elsif ($name =~ /^[a-zA-Z0-9_]+$/) {
                 push @{$$hh_captures {$name}} => $match;
             }
         }
@@ -248,10 +259,25 @@ sub match {
                     $pass = 0;
                     last SKIP;
                 }
+                #
+                # %- contains an entry for *each* named group, regardless
+                # whether it's a capture or not.
+                #
+                my $named_matches  = 0;
+                   $named_matches += @$_ for values %-;
+                my $unexpected = $ghost_num_captures + $ghost_name_captures ?
+                                 "unexpected " : "";
+                 
                 $pass = 0 unless
                     $Test -> is_eq ($&, $subject, "${__}match is complete");
                 $pass = 0 unless
-                    $Test -> ok (@- == 1 && keys %- == 0, "${__}no captures");
+                    $Test -> is_eq (scalar @-, 
+                                    1 + $ghost_num_captures 
+                                      + $ghost_name_captures,
+                                    "${__}no ${unexpected}numbered captures");
+                $pass = 0 unless
+                    $Test -> is_eq ($named_matches, $ghost_name_captures,
+                                   "${__}no ${unexpected}named captures");
             }
         }
         if ($match && defined $keep_pattern) {
@@ -323,7 +349,7 @@ sub match {
                     }
                     $pass = 0 unless
                         $Test -> is_num (scalar @{$minus {$key} || []},
-                                 scalar @$value, "${__} capture '$key' has " .
+                                 scalar @$value, "$__${__}capture '$key' has " .
                                  @$value . " matches");
                 }
                 #
@@ -331,9 +357,14 @@ sub match {
                 #
                 $pass = 0 unless
                     $Test -> is_num (scalar keys %minus,
-                                     scalar keys %$hh_captures,
+                                     $ghost_name_captures + keys %$hh_captures,
                               $__ . scalar (keys %$hh_captures)
-                                  . " named capture groups");
+                                  . " named capture groups"
+                                  . ($ghost_name_captures
+                                          ? "; $ghost_name_captures " .
+                                            "ghost captures"
+                                          : "")
+                    );
 
 
                 #
@@ -397,22 +428,26 @@ fieldhash my %reason;
 fieldhash my %test;
 fieldhash my %show_line;
 fieldhash my %style;
+fieldhash my %ghost_num_captures;
+fieldhash my %ghost_name_captures;
 
 sub init {
     my $self = shift;
     my %arg  = @_;
 
-    $pattern        {$self} = $arg {pattern};
-    $keep_pattern   {$self} = $arg {keep_pattern};
-    $name           {$self} = $arg {name};
-    $comment        {$self} = $arg {comment};
-    $utf8_upgrade   {$self} = $arg {utf8_upgrade};
-    $utf8_downgrade {$self} = $arg {utf8_downgrade};
-    $match          {$self} = $arg {match};
-    $reason         {$self} = $arg {reason};
-    $test           {$self} = $arg {test};
-    $show_line      {$self} = $arg {show_line};
-    $style          {$self} = $arg {style};
+    $pattern             {$self} = $arg {pattern};
+    $keep_pattern        {$self} = $arg {keep_pattern};
+    $name                {$self} = $arg {name};
+    $comment             {$self} = $arg {comment};
+    $utf8_upgrade        {$self} = $arg {utf8_upgrade};
+    $utf8_downgrade      {$self} = $arg {utf8_downgrade};
+    $match               {$self} = $arg {match};
+    $reason              {$self} = $arg {reason};
+    $test                {$self} = $arg {test};
+    $show_line           {$self} = $arg {show_line};
+    $style               {$self} = $arg {style};
+    $ghost_num_captures  {$self} = $arg {ghost_num_captures};
+    $ghost_name_captures {$self} = $arg {ghost_name_captures};
 
     $self;
 }
@@ -420,17 +455,19 @@ sub init {
 sub args {
     my  $self = shift;
     (
-        pattern        => $pattern        {$self},
-        keep_pattern   => $keep_pattern   {$self},
-        name           => $name           {$self},
-        comment        => $comment        {$self},
-        utf8_upgrade   => $utf8_upgrade   {$self},
-        utf8_downgrade => $utf8_downgrade {$self},
-        match          => $match          {$self},
-        reason         => $reason         {$self},
-        test           => $test           {$self},
-        show_line      => $show_line      {$self},
-        style          => $style          {$self},
+        pattern             => $pattern             {$self},
+        keep_pattern        => $keep_pattern        {$self},
+        name                => $name                {$self},
+        comment             => $comment             {$self},
+        utf8_upgrade        => $utf8_upgrade        {$self},
+        utf8_downgrade      => $utf8_downgrade      {$self},
+        match               => $match               {$self},
+        reason              => $reason              {$self},
+        test                => $test                {$self},
+        show_line           => $show_line           {$self},
+        style               => $style               {$self},
+        ghost_num_captures  => $ghost_num_captures  {$self},
+        ghost_name_captures => $ghost_name_captures {$self},
     )
 }
 
@@ -666,7 +703,11 @@ indicating what this specific test is testing (the argument to C<< test >>).
 
 =item C<< style => STRING >>
 
-A for now undocumentated feature, and subject to change.
+A for now undocumented feature, and subject to change.
+
+=item C<< ghost_num_captures => INTEGER >>, C<< ghost_name_captures => INTEGER >>
+
+Undocumented features, subject to change.
 
 =back
 

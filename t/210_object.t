@@ -19,11 +19,11 @@ my $checker = Test::Regexp -> new -> init (
 );
 
 my @data = (
-    ['PPPPPPPPP',   [qw [Gerald Ford]]],
-    ['PPPPPPPPP',   [qw [Jimmy Carter]]],
-    ['PPPPPPPPP',   [qw [Ronald Reagan]]],
-    ['PFPPFPPPFFF', [qw [George W H Bush]]],
-    ['PPPPPPPPP',   [qw [William Clinton]]],
+    ['PPPPPPPPPP',   [qw [Gerald Ford]]],
+    ['PPPPPPPPPP',   [qw [Jimmy Carter]]],
+    ['PPPPPPPPPP',   [qw [Ronald Reagan]]],
+    ['PFPPPFPPPFFF', [qw [George W H Bush]]],
+    ['PPPPPPPPPP',   [qw [William Clinton]]],
 );
 
 foreach my $data (@data) {
