@@ -1,3 +1,6 @@
+Version 2009120903
++ Use @+ instead of @- to find the number of captures.
+
 Version 2009120902
 + Tweaked undocumented features.
 
