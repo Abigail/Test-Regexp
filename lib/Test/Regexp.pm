@@ -276,7 +276,7 @@ sub match {
                 $pass = 0 unless
                     $Test -> is_eq ($&, $subject, "${__}match is complete");
                 $pass = 0 unless
-                    $Test -> is_eq (scalar @-, 
+                    $Test -> is_eq (scalar @+, 
                                     1 + $ghost_num_captures,
                                     "${__}no ${unexpected}numbered captures");
                 $pass = 0 unless
@@ -322,7 +322,7 @@ sub match {
                 #
                 # Grab numbered captures.
                 #
-                for (my $i = 1; $i < @-; $i ++) {
+                for (my $i = 1; $i < @+; $i ++) {
                     no strict 'refs';
                     push @numbered_matches => $$i;
                 }
