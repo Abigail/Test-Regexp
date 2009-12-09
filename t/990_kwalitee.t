@@ -7,10 +7,8 @@ use Test::More;
 
 my $garbage = "Debian_CPANTS.txt";
 
-eval {
-    require Test::Kwalitee;
-    Test::Kwalitee -> import;
-};
+eval "use Test::Kwalitee 1.01; 1" or
+      plan skip_all => "Test::Kwalitee 1.01 required to test Kwalitee";
 
 plan skip_all => 'Test::Kwalitee not installed; skipping' if $@;
 
