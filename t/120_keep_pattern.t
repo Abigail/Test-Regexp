@@ -104,6 +104,15 @@ sub init_data {(
     # Not enough named captures.
     ['Wood Violet',       qr {(?<a>\w+)\s+(?<a>\w+)},  'y', 'PPPFPPF',
       [[a => 'Wood']]],
+
+    # Incomplete match
+    ['Forget Me Not',     qr {(?<a>\w+)\s+(?<b>\w+)},  'y', 'PFSSSSSSSS',
+      [[a => 'Forget'], [b => 'Me']]],
+
+    # Incomplete match
+    ['Forget Me Not 2',   qr {(?<a>\w+)\s+(?<b>\w+)\s+(?<c>\w+)},
+                                                       'y', 'PFSSSSSSSSSSS',
+      [[a => 'Forget'], [b => 'Me'], [c => 'Not']]],
 )}
 
 

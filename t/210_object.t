@@ -22,7 +22,7 @@ my @data = (
     ['PPPPPPPPPP',   [qw [Gerald Ford]]],
     ['PPPPPPPPPP',   [qw [Jimmy Carter]]],
     ['PPPPPPPPPP',   [qw [Ronald Reagan]]],
-    ['PFPPPFPPPFFF', [qw [George W H Bush]]],
+    ['PFSSPFSSSSSS', [qw [George W H Bush]]],
     ['PPPPPPPPPP',   [qw [William Clinton]]],
 );
 

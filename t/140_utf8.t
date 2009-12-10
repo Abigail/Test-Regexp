@@ -52,7 +52,7 @@ sub init_data {(
 
     # Match without captures.
     ["F\x{f8}o",  qr /\w+/, 'y',
-      ['PPPPPFPP', 'PPPPPFPP', 'PPPP', 'PFPPPPPP', 'PFPP', 'PFPPPPPP'],
+      ['PPPPPFSS', 'PPPPPFSS', 'PPPP', 'PFSSPPPP', 'PFSS', 'PFSSPPPP'],
       []],
 )}
 

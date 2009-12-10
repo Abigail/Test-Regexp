@@ -40,6 +40,7 @@ END {say "1..$count"}
         my $mesg = join "" => @msgs;
         print "## $mesg";
         given ($mesg) {
+            when (/# skip/)  {$result .= "S"}
             when (/^ok/)     {$result .= "P"}
             when (/^not ok/) {$result .= "F"}
         }
@@ -74,7 +75,7 @@ sub check {
     my ($expected, $subject, $match_val, $pattern) = @_;
     my $tag      = "ok ";
     my $exp_pat  = $expected;
-       $exp_pat  =~ s/S/P/g;
+    #  $exp_pat  =~ s/S/P/g;
     my $pass     =  1;
     if ($result !~ /^$exp_pat$/) {
         say "# Got '$result'";

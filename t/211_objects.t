@@ -22,11 +22,11 @@ my $checker3 = Test::Regexp -> new -> init (
 );
 
 my @data = (
-    ['PFPPPFF',  'PPPPPPP',  [qw [tripoline a punta]]],
-    ['PPPPPP',   'FPPP',     [qw [cannarozzi rigati]]],
-    ['PPPPPP',   'FPPP',     [qw [lumache grandi]]],
-    ['PFPPPFFF', 'PFPPPPFF', [qw [lasagne festonate a nidi]]],
-    ['PFPPPFF',  'PPPPPPP',  [qw [corni di bue]]],
+    ['PFSSSSS',  'PPPPPPP',  [qw [tripoline a punta]]],
+    ['PPPPPP',   'FSSSSS',   [qw [cannarozzi rigati]]],
+    ['PPPPPP',   'FSSSSS',   [qw [lumache grandi]]],
+    ['PFSSSSSS', 'PFSSSSSS', [qw [lasagne festonate a nidi]]],
+    ['PFSSSSS',  'PPPPPPP',  [qw [corni di bue]]],
 );
 
 foreach my $data (@data) {

@@ -46,8 +46,8 @@ Dagr          ....       y   PPPP
 Kvasir        Kvasir     y   PPPP
 Snotra        \w+        y   PPPP
 Sjofn         \w+        n   F     # It matches, so a no_match should fail
-Borr          Bo         y   PFPP  # Match is only partial
-Magni         Sigyn      y   FSS   # Fail, then a skip
+Borr          Bo         y   PFSS  # Match is only partial
+Magni         Sigyn      y   FSSS  # Fail, then a skip
 Andhrimnir    Delling    n   P     # Doesn't match, so a pass
 Hlin          .(.)..     y   PPFP  # Sets a capture, so should fail
 Od            (?<l>.*)   y   PPFF  # Sets a capture, so should fail

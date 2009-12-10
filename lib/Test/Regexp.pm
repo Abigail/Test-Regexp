@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2009120903';
+our $VERSION = '2009121001';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -260,10 +260,11 @@ sub match {
             SKIP: {
                 my $result = $subject =~ /^$pattern/;
                 unless ($Test -> ok ($result, "$comment$test")) {
-                    $Test -> skip ("Match failed") for 1 .. 2;
+                    $Test -> skip ("Match failed") for 1 .. 3;
                     $pass = 0;
                     last SKIP;
                 }
+
                 #
                 # %- contains an entry for *each* named group, regardless
                 # whether it's a capture or not.
@@ -272,9 +273,15 @@ sub match {
                    $named_matches += @$_ for values %-;
                 my $unexpected = $ghost_num_captures || $ghost_name_captures ?
                                  "unexpected " : "";
+
+
+                unless ($Test -> is_eq ($&, $subject,
+                                       "${__}match is complete")) {
+                    $Test -> skip ("Match failed") for 2 .. 3;
+                    $pass = 0;
+                    last SKIP;
+                }
                  
-                $pass = 0 unless
-                    $Test -> is_eq ($&, $subject, "${__}match is complete");
                 $pass = 0 unless
                     $Test -> is_eq (scalar @+, 
                                     1 + $ghost_num_captures,
@@ -284,6 +291,8 @@ sub match {
                                    "${__}no ${unexpected}named captures");
             }
         }
+
+
         if ($match && defined $keep_pattern) {
             #
             # Test keep. Should match, and the parts as well.
@@ -301,17 +310,28 @@ sub match {
             # If you only have numbered captures, you have 4 + N tests.
             #
             SKIP: {
-                my $skips  = 1 + @$aa_captures;
-                   $skips += @{$_} for values %$hh_captures;
+                my $nr_of_tests  = 0;
+                   $nr_of_tests += 1;  # For match.
+                   $nr_of_tests += 1;  # For match complete.
+                   $nr_of_tests += @{$_} for values %$hh_captures;
+                                       # Number of named captures.
+                   $nr_of_tests += scalar keys %$hh_captures;
+                                       # Number of different named captures.
+                   $nr_of_tests += 1;  # Right number of named captures.
+                   $nr_of_tests += @$aa_captures;
+                                       # Number of numbered captures.
+                   $nr_of_tests += 1;  # Right number of numbered captures.
 
                 my ($amp, @numbered_matches, %minus);
 
                 my $result = $subject =~ /^$keep_pattern/;
                 unless ($Test -> ok ($result, "$comment (with -Keep)$test")) {
-                    $Test -> skip ("Match failed") for 1 .. $skips;
+                    $Test -> skip ("Match failed") for 2 .. $nr_of_tests;
                     $pass = 0;
                     last SKIP;
                 }
+
+
                 #
                 # Copy $&, $N and %- before doing anything that
                 # migh override them.
@@ -337,8 +357,12 @@ sub match {
                 #
                 # Test to see if match is complete.
                 #
-                $pass = 0 unless
-                    $Test -> is_eq ($amp, $subject, "${__}match is complete");
+                unless ($Test -> is_eq ($amp, $subject,
+                                       "${__}match2 is complete")) {
+                    $Test -> skip ("Match incomplete") for 3 .. $nr_of_tests;
+                    $pass = 0;
+                    last SKIP;
+                }
 
                 #
                 # Test named captures.

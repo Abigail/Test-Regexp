@@ -1,3 +1,6 @@
+Version 2009121001
++ Better skipping of tests.
+
 Version 2009120903
 + Use @+ instead of @- to find the number of captures.
 
