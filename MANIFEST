@@ -24,4 +24,5 @@ t/220_comment.t
 t/950_pod.t
 t/960_pod_coverage.t
 t/990_kwalitee.t
+t/999_release.t
 t/Common.pm
