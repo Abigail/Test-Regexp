@@ -24,7 +24,7 @@ my %args = (
     LICENSE              => 'mit',
     META_MERGE           => {
         test_requires    => {
-            'Test::More' => 0,
+            'Test::More' => 0.88,
             'warnings'   => 0,
             'strict'     => 0,
         },

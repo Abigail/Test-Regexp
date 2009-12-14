@@ -1,3 +1,6 @@
+Version 2009121402
++ Require Test::More 0.88.
+
 Version 2009121401
 + Tweaks in displaying messages.
 
