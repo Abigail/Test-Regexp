@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2009121001';
+our $VERSION = '2009121401';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -69,7 +69,17 @@ sub pretty {
 
 sub mess {
     my $val = shift;
-    defined $val ? 'eq "' . pretty ($val) . '"' : 'undefined';
+    unless (defined $val) {return 'undefined'}
+    my $pretty = pretty $val;
+    if ($pretty eq $val && $val !~ /'/) {
+        return "eq '$val'";
+    }
+    elsif ($pretty !~ /"/) {
+        return 'eq "' . $pretty . '"';
+    }
+    else {
+        return "eq qq {$pretty}";
+    }
 }
 
 
