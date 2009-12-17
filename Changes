@@ -1,3 +1,6 @@
+Version 2009121701
++ Removed t/990_kwalitee.t
+
 Version 2009121403
 + Sync VERSION numbers
 
