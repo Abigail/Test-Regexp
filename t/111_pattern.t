@@ -4,11 +4,12 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use t::Common qw [check $count $failures];
 
 use 5.010;
 
-use Test::Regexp tests => 'no_plan';
+use Test::Tester;
+use Test::Regexp;
+use t::Common;
 
 
 while (<DATA>) {
@@ -24,21 +25,24 @@ while (<DATA>) {
         @+ {qw [subject pattern match result number name]};
 
     my $match_val = $match =~ /[ym1]/i;
-    my $r = match subject              =>  $subject,
-                  pattern              =>  $pattern,
-                  match                =>  $match_val,
-                  ghost_num_captures   =>  $nums,
-                  ghost_name_captures  =>  $names,
+    my $match_res;
+    my ($premature, @results) = run_tests sub {
+        $match_res = match subject              =>  $subject,
+                           pattern              =>  $pattern,
+                           match                =>  $match_val,
+                           ghost_num_captures   =>  $nums,
+                           ghost_name_captures  =>  $names,
+    };
+
+    check results   => \@results,
+          premature => $premature,
+          expected  => $expected,
+          match_exp => $match_val,
+          match_res => $match_res,
+          pattern   => $pattern,
+          subject   => $subject,
     ;
 
-    unless ($r && $expected !~ /[^P]/ ||
-           !$r && $expected =~ /[^P]/) {
-        print "not ";
-        $failures ++;
-    }
-    say "ok ", ++ $count, " match() return value";
-
-    check ($expected, $subject, $match_val, $pattern);
 }
 
 
