@@ -6,7 +6,7 @@ no  warnings 'syntax';
 
 use 5.010;
 
-use Test::Builder ();
+use Test::More;
 use Exporter ();
 
 our @EXPORT    = qw [check];
@@ -21,76 +21,48 @@ our $reason;
 our $test;
 our $line;
 
-END {
-    Test::Builder::_my_exit ($failures > 254 ? 254 : $failures);
-    no strict 'refs';
-    no warnings 'redefine';
- *{"Test::Builder::_my_exit"} = sub {1;}
-};
-END {say "1..$count"}
-
-{
-    no strict 'refs';
-    no warnings 'redefine';
-    #
-    # Intercept the 'ok' and 'not ok' prints, and remember the results.
-    #
-    *{"Test::Builder::_print"} = sub {
-        my ($self, @msgs) = @_;
-        my $mesg = join "" => @msgs;
-        print "## $mesg";
-        given ($mesg) {
-            when (/# skip/)  {$result .= "S"}
-            when (/^ok/)     {$result .= "P"}
-            when (/^not ok/) {$result .= "F"}
-        }
-        if (!defined $comment && $mesg =~ /matched by "(.*?)"/)  {
-            $comment = $1;
-        }
-        if (!defined $reason  && $mesg =~ /\[Reason: (.*?)\]/)   {
-            $reason  = $1;
-        }
-        if (!defined $test    && $mesg =~ /\[Test: (.*?)\]/)     {
-            $test    = $1;
-        }
-        if (!defined $line    && $mesg =~ /\[([^]:]+:[0-9]+)\]/) {
-            $line    = $1;
-        }
-    };
-    #
-    # Mark diagnostics.
-    #
-    *{"Test::Builder::_print_diag"} = sub {
-        my ($self, @msgs)  = @_;
-        my $mesg = join "" => @msgs;
-        $mesg =~ s/^/   /mg;
-        $mesg =~ s/^  /##/;
-        print $mesg;
-        1;
-    }
-}
 
 
 sub check {
-    my ($expected, $subject, $match_val, $pattern) = @_;
-    my $tag      = "ok ";
-    my $exp_pat  = $expected;
-    #  $exp_pat  =~ s/S/P/g;
-    my $pass     =  1;
-    if ($result !~ /^$exp_pat$/) {
-        say "# Got '$result'";
-        say "# Expected '$expected'";
-        $tag  = "not $tag";
-        $pass =  0;
+    my %arg = @_;
+
+    my $results   = $arg {results};
+    my $premature = $arg {premature};
+    my $match_exp = $arg {match_exp} || 0;
+    my $match_res = $arg {match_res} || 0;
+    my $pattern   = $arg {pattern};
+    my $expected  = $arg {expected};
+    my $subject   = $arg {subject};
+
+    my $op        = $match_exp ? "=~" : "!~";
+    my $name      = qq {"$subject" $op /$pattern/};
+
+    $expected = [split // => $expected] unless ref $expected;
+
+    #
+    # Number of tests?
+    #
+    ok @$results == @$expected, "$name: number of tests";
+
+    #
+    # Correct return value from match?
+    #
+    ok +( $match_res && !grep {$_ eq 'F'} @$expected) ||
+        (!$match_res &&  grep {$_ eq 'F'} @$expected), "$name: (no)match value";
+
+    for (my $i = 0; $i < @$results; $i ++) {
+        my $result = $$results  [$i];
+        my $exp    = $$expected [$i];
+        my $ok     = $$result {ok};
+        ok $ok && $exp =~ /[PS]/ ||
+          !$ok && $exp =~ /[FS]/, "$name: sub-test " . ($i + 1);
     }
-    my $op = $match_val ? "=~" : "!~";
-    say $tag, ++ $count, qq { "$subject" $op /$pattern/};
-    $result = "";
-    $failures ++ unless $pass;
-    return $pass;
 }
+    
+END {done_testing}
 
 
 1;
+
 
 __END__
