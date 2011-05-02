@@ -33,11 +33,13 @@ sub check {
     my $pattern   = $arg {pattern};
     my $expected  = $arg {expected};
     my $subject   = $arg {subject};
-
+    
     my $op        = $match_exp ? "=~" : "!~";
     my $name      = qq {"$subject" $op /$pattern/};
 
     $expected = [split // => $expected] unless ref $expected;
+
+    ok !$premature, "No preceeding garbage";
 
     #
     # Number of tests?
