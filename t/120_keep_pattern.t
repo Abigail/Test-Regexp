@@ -35,6 +35,7 @@ foreach my $data (@data) {
           match_res => $match_res,
           pattern   => $pattern,
           subject   => $subject,
+          keep      =>  1,
     ;
 }
 

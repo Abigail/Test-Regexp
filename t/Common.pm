@@ -33,6 +33,8 @@ sub check {
     my $pattern   = $arg {pattern};
     my $expected  = $arg {expected};
     my $subject   = $arg {subject};
+    my $comment   = $arg {comment}   // "";
+    my $keep      = $arg {keep};
     
     my $op        = $match_exp ? "=~" : "!~";
     my $name      = qq {"$subject" $op /$pattern/};
@@ -59,6 +61,15 @@ sub check {
         ok $ok && $exp =~ /[PS]/ ||
           !$ok && $exp =~ /[FS]/, "$name: sub-test " . ($i + 1);
     }
+    #
+    # Check the name of the first test
+    #
+    my $test_name    = $$results [0] {name} // "";
+    my $neg          = $match_exp ? "" : "not ";
+    my $exp_comment  = qq {qq {$subject} ${neg}matched by "$comment"};
+       $exp_comment .= " (with -Keep)" if $keep;
+
+    is $test_name, $exp_comment, "Test name";
 }
     
 END {done_testing}

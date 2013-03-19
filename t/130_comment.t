@@ -4,77 +4,34 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use t::Common qw [$count $comment $failures];
-
 use 5.010;
 
-use Test::Regexp tests => 'no_plan';
+use Test::Tester;
+use Test::Regexp;
+use t::Common;
 
-sub is {
-    my ($got, $expected, $name) = @_;
-    if ((defined ($got) xor defined ($expected)) ||
-        ($got ne $expected)) {
-        say "#      got: ", $got      // 'undef';
-        say "# expected: ", $expected // 'undef';
-        print "not ";
-        $failures ++;
-    }
-    say "ok ", ++ $count, " - $name";
-}
+my $match_res;
 
-sub comment_tests {
-    my $Comment = shift;
-    undef $comment;
+foreach my $name (undef, "", "Hello", "Flip Flap") {
+    foreach my $arg_name ("name", "comment") {
+        foreach my $keep (0, 1) {
+            my $p_arg_name = $keep ? "keep_pattern" : "pattern";
+            my ($premature, @results) = run_tests sub {
+                $match_res = match subject      => "Foo",
+                                   $p_arg_name  => qr {Foo},
+                                   $arg_name    => $name,
+            };
 
-    foreach my $tag (qw [name comment]) {
-        my @c_args;
-           @c_args = ($tag => $Comment) if defined $Comment;
-
-        undef $comment;
-        match subject  =>  "Foo",
-              pattern  =>  qr {Foo},
-              @c_args;
-        is $comment, $Comment // "", " $tag with matching pattern";
-    
-        undef $comment;
-        match subject  =>  "Foo",
-              pattern  =>  qr {Bar},
-              @c_args;
-        is $comment, $Comment // "", " $tag with non-matching pattern";
-    
-        undef $comment;
-        match subject       =>  "Foo",
-              keep_pattern  =>  qr {(Foo)},
-              captures      =>  ["Foo"],
-              @c_args;
-        is $comment, $Comment // "", " $tag with matching numbered pattern";
-    
-        undef $comment;
-        match subject       =>  "Foo",
-              keep_pattern  =>  qr {(?<bar>Foo)},
-              captures      =>  [[bar => "Foo"]],
-              @c_args;
-        is $comment, $Comment // "", " $tag with matching named pattern";
-        
-        undef $comment;
-        match subject       =>  "Foo",
-              keep_pattern  =>  qr {(Bar)},
-              captures      =>  ["Bar"],
-              @c_args;
-        is $comment, $Comment // "", " $tag with non-matching numbered pattern";
-    
-        undef $comment;
-        match subject       =>  "Foo",
-              keep_pattern  =>  qr {(?<bar>Bar)},
-              captures      =>  [[bar => "Bar"]],
-              @c_args;
-        is $comment, $Comment // "", " $tag with non-matching named pattern";
+            check results   => \@results,
+                  premature => $premature,
+                  expected  => 'PPPP',
+                  match_exp => 1,
+                  match_res => $match_res,
+                  pattern   => 'Foo',
+                  subject   => "Foo",
+                  comment   => $name,
+                  keep      => $keep,
+            ;
+        }
     }
 }
-
-
-comment_tests undef;
-comment_tests "";
-comment_tests "Baz";
-
-__END__
