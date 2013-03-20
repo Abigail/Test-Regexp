@@ -21,7 +21,7 @@ our $reason;
 our $test;
 our $line;
 
-
+sub escape;
 
 sub check {
     my %arg = @_;
@@ -72,9 +72,21 @@ sub check {
     my $neg          = $match_exp ? "" : "not ";
     my $exp_comment  = qq {qq {$subject} ${neg}matched by "$comment"};
        $exp_comment .= " (with -Keep)" if $keep;
+       $exp_comment  = escape $exp_comment;
 
     is $test_name, $exp_comment, "Test name";
 }
+
+
+sub escape {
+    my $str = shift;
+    $str =~ s/\n/\\n/g;
+    $str =~ s/\t/\\t/g;
+    $str =~ s/\r/\\r/g;
+    $str =~ s/([^\x20-\x7E])/sprintf "\\x{%02X}" => ord $1/eg;
+    $str;
+}
+
     
 END {done_testing}
 
