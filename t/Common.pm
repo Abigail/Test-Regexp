@@ -55,11 +55,15 @@ sub check {
         (!$match_res &&  grep {$_ eq 'F'} @$expected), "$name: (no)match value";
 
     for (my $i = 0; $i < @$results; $i ++) {
-        my $result = $$results  [$i];
-        my $exp    = $$expected [$i];
-        my $ok     = $$result {ok};
+        my $result  =  $$results  [$i];
+        my $exp     =  $$expected [$i];
+        my $ok      =  $$result {ok};
+        my $comment =  $$result {name};
+           $comment =~ s/^\s+//;
+           $comment =  "Skipped" if $$result {type} eq 'skip';
+
         ok $ok && $exp =~ /[PS]/ ||
-          !$ok && $exp =~ /[FS]/, "$name: sub-test " . ($i + 1);
+          !$ok && $exp =~ /[FS]/, "$name: sub-test ($comment)";
     }
     #
     # Check the name of the first test
