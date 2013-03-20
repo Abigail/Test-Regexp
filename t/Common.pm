@@ -46,7 +46,13 @@ sub check {
     #
     # Number of tests?
     #
-    ok @$results == @$expected, "$name: number of tests";
+    if (@$results == @$expected) {
+        pass "$name: number of tests";
+    }
+    else {
+        fail sprintf "%s: Got %d tests, expected %d tests" =>
+                     $name, scalar @$results, scalar @$expected;
+    }
 
     #
     # Correct return value from match?
