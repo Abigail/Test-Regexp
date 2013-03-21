@@ -23,6 +23,19 @@ our $line;
 
 sub escape;
 
+#
+# results:    Arrayref with test results (from Test::Tester)
+# premature:  Anything appearing before test results (from Test::Tester)
+# match_exp:  Should the pattern match or not? Default 0.
+# match_res:  Return value from the "match" function (from Test::Regexp)
+# pattern:    Pattern passed to "match" function (pattern or keep_pattern)
+# subject:    String the pattern is matched against (subject option for "match")
+# expected:   Expected results of the tests. String of 'P', 'F', 'S' 
+#             for "Pass", "Fail" and "Skip".
+# comment:   (Optional) 'comment' or 'name' option passed to "match".
+# keep:      (Optional) If true, the pattern is a keep pattern.
+# reason:    (Optional) The "reason" parameter passed to "match".
+#
 sub check {
     my %arg = @_;
 
