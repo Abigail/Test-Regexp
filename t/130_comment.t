@@ -25,7 +25,7 @@ foreach my $name (undef, "", "Hello", "Flip Flap") {
             check results   => \@results,
                   premature => $premature,
                   expected  => 'PPPP',
-                  match_exp => 1,
+                  match     => 1,
                   match_res => $match_res,
                   pattern   => 'Foo',
                   subject   => "Foo",

@@ -25,7 +25,7 @@ foreach my $reason (undef, "", 0, "Bla bla bla") {
         check results   => \@results,
               premature => $premature,
               expected  => 'P',
-              match_exp => 0,
+              match     => 0,
               match_res => $match_res,
               pattern   => 'Bar',
               subject   => "Foo",

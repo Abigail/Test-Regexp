@@ -37,7 +37,7 @@ while (<DATA>) {
     check results   => \@results,
           premature => $premature,
           expected  => $expected,
-          match_exp => $match_val,
+          match     => $match_val,
           match_res => $match_res,
           pattern   => $pattern,
           subject   => $subject,

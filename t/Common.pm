@@ -26,7 +26,7 @@ sub escape;
 #
 # results:    Arrayref with test results (from Test::Tester)
 # premature:  Anything appearing before test results (from Test::Tester)
-# match_exp:  Should the pattern match or not? Default 0.
+# match:      Should the pattern match or not? Default 0.
 # match_res:  Return value from the "match" function (from Test::Regexp)
 # pattern:    Pattern passed to "match" function (pattern or keep_pattern)
 # subject:    String the pattern is matched against (subject option for "match")
@@ -41,7 +41,7 @@ sub check {
 
     my $results   = $arg {results};
     my $premature = $arg {premature};
-    my $match_exp = $arg {match_exp} || 0;
+    my $match     = $arg {match}     || 0;
     my $match_res = $arg {match_res} || 0;
     my $pattern   = $arg {pattern};
     my $expected  = $arg {expected};
@@ -50,7 +50,7 @@ sub check {
     my $keep      = $arg {keep};
     my $reason    = $arg {reason};
     
-    my $op        = $match_exp ? "=~" : "!~";
+    my $op        = $match ? "=~" : "!~";
     my $name      = qq {"$subject" $op /$pattern/};
 
     $expected = [split // => $expected] unless ref $expected;
@@ -89,7 +89,7 @@ sub check {
     # Check the name of the first test
     #
     my $test_name    = $$results [0] {name} // "";
-    my $neg          = $match_exp ? "" : "not ";
+    my $neg          = $match ? "" : "not ";
     my $exp_comment  = qq {qq {$subject} ${neg}matched by "$comment"};
        $exp_comment .= " (with -Keep)" if $keep;
        $exp_comment .= sprintf " [Reason: %s]" => $reason if defined $reason;
