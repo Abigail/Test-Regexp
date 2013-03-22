@@ -13,7 +13,6 @@ t/120_keep_pattern.t
 t/130_comment.t
 t/140_utf8.t
 t/150_reason.t
-t/155_test.t
 t/160_show_line.t
 t/200_use.t
 t/201_example.t

@@ -14,25 +14,29 @@ my $match_res;
 
 foreach my $reason (undef, "", 0, "Bla bla bla") {
     foreach my $name ("", "Baz", "Qux Quux") {
-        my ($premature, @results) = run_tests sub {
-            $match_res = match subject => "Foo",
-                               pattern => qr {Bar},
-                               match   => 0,
-                               reason  => $reason,
-                               name    => $name,
-        };
+        foreach my $match (0, 1) {
+            my ($premature, @results) = run_tests sub {
+                $match_res = match subject => "Foo",
+                                   pattern => $match ? qr {Foo} : qr {Bar},
+                                   match   => $match,
+                                   reason  => $reason,
+                                   test    => $reason,
+                                   name    => $name,
+            };
 
-        check results   => \@results,
-              premature => $premature,
-              expected  => 'P',
-              match     => 0,
-              match_res => $match_res,
-              pattern   => 'Bar',
-              subject   => "Foo",
-              comment   => $name,
-              keep      => 0,
-              reason    => $reason,
-        ;
+            check results   => \@results,
+                  premature => $premature,
+                  expected  => $match ? 'PPPP' : 'P',
+                  match     => $match,
+                  match_res => $match_res,
+                  pattern   => 'Bar',
+                  subject   => "Foo",
+                  comment   => $name,
+                  keep      => 0,
+        $match ? (test      => $reason)
+               : (reason    => $reason),
+            ;
+        }
     }
 }
 
