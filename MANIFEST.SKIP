@@ -2,3 +2,4 @@
 .gitignore
 Releases
 MANIFEST.SKIP
+.*.tar.gz
