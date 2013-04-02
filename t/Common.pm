@@ -113,6 +113,7 @@ sub escape {
     $str =~ s/\t/\\t/g;
     $str =~ s/\r/\\r/g;
     $str =~ s/([^\x20-\x7E])/sprintf "\\x{%02X}" => ord $1/eg;
+    $str =~ s/#/\\#/g;   # TAP does this
     $str;
 }
 
