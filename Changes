@@ -1,3 +1,6 @@
+Version 2013040201 Tue Apr  2 19:33:03 CEST 2013
++ Used Test::Tester to check tests.
+
 Version 2009121701
 + Removed t/990_kwalitee.t
 

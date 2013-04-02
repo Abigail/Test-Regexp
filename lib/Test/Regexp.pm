@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2009121701';
+our $VERSION = '2013040201';
 
 BEGIN {
     binmode STDOUT, ":utf8";
