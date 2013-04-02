@@ -4,20 +4,18 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use t::Common qw [check $count $comment $reason $line];
-
 use 5.010;
 
-use Test::Regexp tests  => 'no_plan',
-                 import => [];
+use Test::Tester;
+use Test::Regexp import => [];
+use t::Common;
 
 my $pattern = '\w+';
 
-my $checker = Test::Regexp -> new -> init (
+my $checker = Test::Regexp:: -> new -> init (
     pattern => $pattern,
     name    => "test",
 );
-
 
 my @fails = (["----"     => "dashes",],
              ["# foo"    => "comment"],
@@ -27,28 +25,21 @@ my $c = 0;
 foreach my $fail (@fails) {
     my ($subject, $Reason) = @$fail;
 
-    undef $reason;
-    undef $comment;
-    undef $line;
+    my $match_res;
+    my ($premature, @results) = run_tests sub {
+        $match_res = $checker -> no_match ($subject, reason => $Reason);
+    };
 
-    my $r = $checker -> no_match ($subject, reason    => $Reason, 
-                                            show_line => $c ++);
-    print "not " unless $r;
-    say "ok ", ++ $count, " no_match succeeded";
-
-    unless (($reason // "") eq $Reason) {
-        print "not ";
-    }
-    say "ok ", ++ $count, " correct reason found";
-    unless (($comment // "") eq "test") {
-        print "not ";
-    }
-    say "ok ", ++ $count, " correct comment found";
-
-    if ($c == 1 && $line || $c > 1 && !$line) {
-        print "not ";
-    }
-    say "ok ", ++ $count, " dealt with show_line correctly";
+    check results   => \@results,
+          premature => $premature,
+          expected  => 'P',
+          match     =>  0,
+          match_res => $match_res,
+          pattern   => $pattern,
+          subject   => $subject,
+          reason    => $Reason,
+          comment   => "test",
+    ;
 }
 
 __END__
