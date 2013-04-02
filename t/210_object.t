@@ -4,42 +4,58 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use t::Common qw [check $count $failures];
-
 use 5.010;
 
-use Test::Regexp tests  => 'no_plan',
-                 import => [];
+use Test::Tester;
+use Test::Regexp import => [];
+use t::Common;
 
-my $pattern = '(\w+)\s+(\w+)';
 
-my $checker = Test::Regexp -> new -> init (
-    keep_pattern => $pattern,
-    pattern      => '\w+\s+\w+',
-);
+while (<DATA>) {
+    chomp;
+    m {^\h* (?|"(?<subject>[^"]*)"|(?<subject>\S+))
+        \h+ (?|/(?<pattern>[^/]*)/|(?<pattern>\S+))
+        \h+ (?<match>(?i:[ymn01]))
+        \h+ (?<result>[PFS]+)
+        \h* (?:$|\#)}x or next;
+    my ($subject, $pattern, my ($match, $expected)) =
+        @+ {qw [subject pattern match result]};
 
-my @data = (
-    ['PPPPPPPPPP',   [qw [Gerald Ford]]],
-    ['PPPPPPPPPP',   [qw [Jimmy Carter]]],
-    ['PPPPPPPPPP',   [qw [Ronald Reagan]]],
-    ['PFSSPFSSSSSS', [qw [George W H Bush]]],
-    ['PPPPPPPPPP',   [qw [William Clinton]]],
-);
+    my $match_val = $match =~ /[ym1]/i;
 
-foreach my $data (@data) {
-    my $expected = shift @$data;
-    my $captures = shift @$data;
-    my $subject  = join ' ' => @$captures;
+    my $checker = Test::Regexp:: -> new -> init (
+        pattern => $pattern,
+    );
 
-    my $r = $checker -> match ($subject, $captures);
-    unless ($r && $expected !~ /[^P]/ ||
-           !$r && $expected =~ /[^P]/) {
-        print "not ";
-        $failures ++;
-    }
-    say "ok ", ++ $count, " match() return value";
+    my $match_res;
+    my $method = $match_val ? "match" : "no_match";
+    my ($premature, @results) = run_tests sub {
+        $match_res = $checker -> $method ($subject)
+    };
 
-    check ($expected, $subject, 1, $pattern);
+    check results   => \@results,
+          premature => $premature,
+          expected  => $expected,
+          match     => $match_val,
+          match_res => $match_res,
+          pattern   => $pattern,
+          subject   => $subject,
+    ;
+
 }
 
-__END__
+
+#
+# Names in the __DATA__ section come from 'meta norse_mythology'.
+#
+
+__DATA__
+Dagr          ....       y   PPPP
+Kvasir        Kvasir     y   PPPP
+Snotra        \w+        y   PPPP
+Sjofn         \w+        n   F     # It matches, so a no_match should fail
+Borr          Bo         y   PFSS  # Match is only partial
+Magni         Sigyn      y   FSSS  # Fail, then a skip
+Andhrimnir    Delling    n   P     # Doesn't match, so a pass
+Hlin          .(.)..     y   PPFP  # Sets a capture, so should fail
+Od            (?<l>.*)   y   PPFF  # Sets a capture, so should fail
