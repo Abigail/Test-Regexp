@@ -4,12 +4,11 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use t::Common qw [check $count $failures];
-
 use 5.010;
 
-use Test::Regexp tests  => 'no_plan',
-                 import => [];
+use Test::Tester;
+use Test::Regexp import => [];
+use t::Common;
 
 my $pattern2 = '(\w+)\s+(\w+)';
 my $pattern3 = '(\w+)\s+(\w+)\s+(\w+)';
@@ -35,25 +34,37 @@ foreach my $data (@data) {
     my $captures  = shift @$data;
     my $subject   = join ' ' => @$captures;
 
-    my $r2 = $checker2 -> match ($subject, $captures);
-    unless ($r2 && $expected2 !~ /[^P]/ ||
-           !$r2 && $expected2 =~ /[^P]/) {
-        print "not ";
-        $failures ++;
-    }
-    say "ok ", ++ $count, " match() return value";
-    check ($expected2, $subject, 1, $pattern2);
+    my $match_res;
+    my ($premature, @results) = run_tests sub {
+        $match_res = $checker2 -> match ($subject, $captures)
+    };
 
-    my $r3 = $checker3 -> match ($subject, $captures);
-    unless ($r3 && $expected3 !~ /[^P]/ ||
-           !$r3 && $expected3 =~ /[^P]/) {
-        print "not ";
-        $failures ++;
-    }
-    say "ok ", ++ $count, " match() return value";
+    check results   => \@results,
+          premature => $premature,
+          expected  => $expected2,
+          match     =>  1,
+          match_res => $match_res,
+          pattern   => $pattern2,
+          subject   => $subject,
+          captures  => $captures,
+          keep      =>  1,
+    ;
 
-    check ($expected3, $subject, 1, $pattern3);
+   ($premature, @results) = run_tests sub {
+        $match_res = $checker3 -> match ($subject, $captures)
+    };
+
+    check results   => \@results,
+          premature => $premature,
+          expected  => $expected3,
+          match     =>  1,
+          match_res => $match_res,
+          pattern   => $pattern3,
+          subject   => $subject,
+          captures  => $captures,
+          keep      =>  1,
+    ;
+
 }
-
 
 __END__
