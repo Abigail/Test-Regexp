@@ -50,6 +50,7 @@ sub check {
     my $keep      = $arg {keep};
     my $reason    = $arg {reason};
     my $test      = $arg {test};
+    my $line      = $arg {line};
     
     my $op        = $match ? "=~" : "!~";
     my $name      = qq {"$subject" $op /$pattern/};
@@ -93,6 +94,7 @@ sub check {
     my $neg          = $match ? "" : "not ";
     my $exp_comment  = qq {qq {$subject} ${neg}matched by "$comment"};
        $exp_comment .= " (with -Keep)" if $keep;
+       $exp_comment .= sprintf " [%s:%d]" => $$line [1], $$line [0] if $line;
        $exp_comment .= sprintf " [Reason: %s]" => $reason
                                        if defined $reason && !$match;
        $exp_comment .= sprintf " [Test: %s]"   => $test

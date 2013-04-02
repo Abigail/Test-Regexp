@@ -4,39 +4,44 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use t::Common qw [$count $line $failures];
-
 use 5.010;
 
-use Test::Regexp tests => 'no_plan';
+use Test::Tester;
+use Test::Regexp;
+use t::Common;
 
-sub ok {
-    my ($success, $name) = @_;
-    unless ($success) {
-        print "not ";
-        $failures ++;
-    }
-    say "ok ", ++ $count, " - $name";
-}
+my $match_res;
 
-sub do_tests {
-    foreach my $show (0, 1) {
-        undef $line;
+foreach my $reason (undef, "", 0, "Bla bla bla") {
+    foreach my $name ("", "Baz", "Qux Quux") {
+        foreach my $match (0, 1) {
+            my ($premature, @results) = run_tests sub {
 #line 999 160_show_line
-        match subject   =>  "Foo",
-              pattern   =>  qr {Foo},
-              show_line =>  $show;
-        if ($show) {
-            ok !!(defined $line && $line eq '160_show_line:999'),
-               "show_line => 1";
-        }
-        else {
-            ok !defined $line, "show_line => 0";
+                $match_res = match subject   => "Foo",
+                                   pattern   => $match ? qr {Foo} : qr {Bar},
+                                   match     => $match,
+                                   reason    => $reason,
+                                   test      => $reason,
+                                   name      => $name,
+                                   show_line => 1,
+            };
+
+            check results   => \@results,
+                  premature => $premature,
+                  expected  => $match ? 'PPPP' : 'P',
+                  match     => $match,
+                  match_res => $match_res,
+                  pattern   => 'Bar',
+                  subject   => "Foo",
+                  comment   => $name,
+                  keep      => 0,
+                  line      => [999 => '160_show_line'],
+        $match ? (test      => $reason)
+               : (reason    => $reason),
+            ;
         }
     }
 }
 
-
-do_tests;
 
 __END__
