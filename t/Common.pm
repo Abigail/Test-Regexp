@@ -73,8 +73,10 @@ sub check {
     #
     # Correct return value from match?
     #
-    ok +( $match_res && !grep {$_ eq 'F'} @$expected) ||
-        (!$match_res &&  grep {$_ eq 'F'} @$expected), "$name: (no)match value";
+    my $match_res_bool =  $match_res                   ? 1 : 0;
+    my $expected_bool  = (grep {$_ eq 'F'} @$expected) ? 0 : 1;
+
+    is $match_res_bool, $expected_bool, "$name: (no)match value";
 
     for (my $i = 0; $i < @$results; $i ++) {
         my $result  =  $$results  [$i];
