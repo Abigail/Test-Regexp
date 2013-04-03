@@ -1,4 +1,4 @@
-This is version 2009121701 of Test::Regexp, a module to test regular
+This is version 2013040201 of Test::Regexp, a module to test regular
 expressions with.
 
 It's a pure perl module, and should install anywhere using
@@ -13,8 +13,6 @@ The module requires Perl 5.10 or later. It will not work on 5.8.x or
 before, and there are no plans to backport it.
 
 Development versions can be retrieved from github.
-
-Version 2009033101 was finished during the qa-hackathon 2009 in Birmingham.
 
 
 Abigail, test-regexp@abigail.be
