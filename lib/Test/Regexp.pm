@@ -368,7 +368,7 @@ sub match {
                 # Test to see if match is complete.
                 #
                 unless ($Test -> is_eq ($amp, $subject,
-                                       "${__}match2 is complete")) {
+                                       "${__}match is complete")) {
                     $Test -> skip ("Match incomplete") for 3 .. $nr_of_tests;
                     $pass = 0;
                     last SKIP;
