@@ -162,9 +162,6 @@ sub todo {
 #   test           What is tested.                  
 #   show_line      Show file name/line number of call to 'match'.
 #
-#   style          If set, do some additional mangling, depending on
-#                  the value. Currently only recognized value is Regexp::Common
-#
 
 sub match {
     my %arg            = @_;
@@ -185,12 +182,9 @@ sub match {
                                        ? " [Test: "   . $arg {test}   . "]"
                                        : "";
     my $show_line      = $arg {show_line};
-    my $style          = $arg {style} // "";
 
     my $ghost_num_captures  = $arg {ghost_num_captures}  // 0;
     my $ghost_name_captures = $arg {ghost_name_captures} // 0;
-
-    $show_line       //= 1 if $style eq 'Regexp::Common';
 
     my $aa_captures;
     my $hh_captures;
@@ -229,24 +223,6 @@ sub match {
     # Delete trailing undefs.
     #
     pop @$aa_captures while @$aa_captures && !defined $$aa_captures [-1];
-
-    given ($arg {style}) {
-        when ("Regexp::Common") {
-            my $Name            =  $name;
-               $Name            =~ s/[^a-zA-Z0-9_]+/_/g;
-            my %hh;
-            $hh {"${Name}"}     =  [$subject];
-            $hh {"${Name}__$_"} =  $$hh_captures {$_}
-                                     for keys %$hh_captures;
-            $hh_captures = \%hh;
-
-            my @aa = ($subject,
-                      map {ref $_ ? ["${Name}__" . $$_ [0], $$_ [1]]
-                                  : $_}
-                      @$aa_captures);
-            $aa_captures = \@aa;
-        }
-    }
 
     my @todo = todo subject   => $subject,
                     comment   => $comment,
@@ -465,7 +441,6 @@ fieldhash my %match;
 fieldhash my %reason;
 fieldhash my %test;
 fieldhash my %show_line;
-fieldhash my %style;
 fieldhash my %ghost_num_captures;
 fieldhash my %ghost_name_captures;
 
@@ -483,7 +458,6 @@ sub init {
     $reason              {$self} = $arg {reason};
     $test                {$self} = $arg {test};
     $show_line           {$self} = $arg {show_line};
-    $style               {$self} = $arg {style};
     $ghost_num_captures  {$self} = $arg {ghost_num_captures};
     $ghost_name_captures {$self} = $arg {ghost_name_captures};
 
@@ -503,7 +477,6 @@ sub args {
         reason              => $reason              {$self},
         test                => $test                {$self},
         show_line           => $show_line           {$self},
-        style               => $style               {$self},
         ghost_num_captures  => $ghost_num_captures  {$self},
         ghost_name_captures => $ghost_name_captures {$self},
     )
@@ -738,10 +711,6 @@ test.
 If the match is expected to pass (when C<< match >> is called, without
 C<< match >> being false), and this option is passed, a message is printed
 indicating what this specific test is testing (the argument to C<< test >>).
-
-=item C<< style => STRING >>
-
-A for now undocumented feature, and subject to change.
 
 =item C<< ghost_num_captures => INTEGER >>, C<< ghost_name_captures => INTEGER >>
 
