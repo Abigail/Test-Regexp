@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2013040301';
+our $VERSION = '2013041201';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -70,7 +70,8 @@ sub pretty {
 sub mess {
     my $val = shift;
     unless (defined $val) {return 'undefined'}
-    my $pretty = pretty $val;
+    my %arg = @_;
+    my $pretty = pretty $val, full_text => $arg {full_text};
     if ($pretty eq $val && $val !~ /'/) {
         return "eq '$val'";
     }
@@ -90,6 +91,7 @@ sub todo {
     my $upgrade   =  $arg {upgrade};
     my $downgrade =  $arg {downgrade};
     my $neg       =  $arg {match} ? "" : "not ";
+    my $full_text =  $arg {full_text};
 
     my $line      = "";
 
@@ -99,7 +101,7 @@ sub todo {
         $line = " [$file:$l_nr]";
     }
 
-    my $subject_pretty = pretty $subject;
+    my $subject_pretty = pretty $subject, full_text => $full_text;
     my $Comment        = qq {qq {$subject_pretty}};
        $Comment       .= qq { ${neg}matched by "$comment"$line};
 
@@ -161,6 +163,7 @@ sub todo {
 #   reason         The reason a match should fail.
 #   test           What is tested.                  
 #   show_line      Show file name/line number of call to 'match'.
+#   full_text      Don't shorten long messages.
 #
 
 sub match {
@@ -182,6 +185,7 @@ sub match {
                                        ? " [Test: "   . $arg {test}   . "]"
                                        : "";
     my $show_line      = $arg {show_line};
+    my $full_text      = $arg {full_text};
 
     my $ghost_num_captures  = $arg {ghost_num_captures}  // 0;
     my $ghost_name_captures = $arg {ghost_name_captures} // 0;
@@ -229,7 +233,8 @@ sub match {
                     upgrade   => $upgrade,
                     downgrade => $downgrade,
                     match     => $match,
-                    show_line => $show_line;
+                    show_line => $show_line,
+                    full_text => $full_text;
 
     #
     # Now we will do the tests.
@@ -359,7 +364,8 @@ sub match {
                             $Test -> is_eq (
                                 $minus {$key} ? $minus {$key} [$i] : undef,
                                 $$value [$i],
-                               "${__}\$- {$key} [$i] " . mess $$value [$i]);
+                               "${__}\$- {$key} [$i] " .
+                                mess ($$value [$i], full_text => $full_text));
                     }
                     $pass = 0 unless
                         $Test -> is_num (scalar @{$minus {$key} || []},
@@ -389,7 +395,8 @@ sub match {
                         $Test -> is_eq ($numbered_matches [$i],
                                         $$aa_captures [$i],
                                        "${__}\$" . ($i + 1) . " " .
-                                        mess $$aa_captures [$i]);
+                                        mess ($$aa_captures [$i],
+                                                full_text => $full_text));
                 }
                 $pass = 0 unless
                     $Test -> is_num (scalar @numbered_matches,
@@ -441,6 +448,7 @@ fieldhash my %match;
 fieldhash my %reason;
 fieldhash my %test;
 fieldhash my %show_line;
+fieldhash my %full_text;
 fieldhash my %ghost_num_captures;
 fieldhash my %ghost_name_captures;
 
@@ -458,6 +466,7 @@ sub init {
     $reason              {$self} = $arg {reason};
     $test                {$self} = $arg {test};
     $show_line           {$self} = $arg {show_line};
+    $full_text           {$self} = $arg {full_text};
     $ghost_num_captures  {$self} = $arg {ghost_num_captures};
     $ghost_name_captures {$self} = $arg {ghost_name_captures};
 
@@ -477,6 +486,7 @@ sub args {
         reason              => $reason              {$self},
         test                => $test                {$self},
         show_line           => $show_line           {$self},
+        full_text           => $full_text           {$self},
         ghost_num_captures  => $ghost_num_captures  {$self},
         ghost_name_captures => $ghost_name_captures {$self},
     )
@@ -711,6 +721,11 @@ test.
 If the match is expected to pass (when C<< match >> is called, without
 C<< match >> being false), and this option is passed, a message is printed
 indicating what this specific test is testing (the argument to C<< test >>).
+
+=item C<< full_text => BOOL >>
+
+By default, long test messages are truncated; if a true value is passed, 
+the message will not get truncated.
 
 =item C<< ghost_num_captures => INTEGER >>, C<< ghost_name_captures => INTEGER >>
 

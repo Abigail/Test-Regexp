@@ -1,3 +1,6 @@
+Version 2013041201 Fri Apr 12 23:05:10 CEST 2013
++ Made the 'full_text' option to work.
+
 Version 2013040301 Wed Apr  3 14:19:40 CEST 2013
 + Sync version numbers between files.
 

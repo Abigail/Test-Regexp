@@ -1,4 +1,5 @@
 =============
 
+- Test "full_text".
 - Do something sensible when no comment is given.
 - Use nested tests.
