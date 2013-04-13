@@ -9,30 +9,31 @@ no  warnings 'syntax';
 use ExtUtils::MakeMaker;
 
 my %args = (
-    NAME                 => 'Test::Regexp',
-    VERSION_FROM         => 'lib/Test/Regexp.pm',
-    ABSTRACT_FROM        => 'lib/Test/Regexp.pm',
-    PREREQ_PM            => {
+    NAME                   => 'Test::Regexp',
+    VERSION_FROM           => 'lib/Test/Regexp.pm',
+    ABSTRACT_FROM          => 'lib/Test/Regexp.pm',
+    PREREQ_PM              => {
         'Exporter'              => 0,
         'Hash::Util::FieldHash' => 0,
         'Test::Builder'         => 0,
         'warnings'              => 0,
         'strict'                => 0,
     },
-    MIN_PERL_VERSION     =>  5.010,
-    AUTHOR               => 'Abigail <test-regexp@abigail.be>',
-    LICENSE              => 'mit',
-    META_MERGE           => {
-        test_requires    => {
-            'Test::More' => 0.88,
-            'warnings'   => 0,
-            'strict'     => 0,
+    MIN_PERL_VERSION       =>  5.010,
+    AUTHOR                 => 'Abigail <test-regexp@abigail.be>',
+    LICENSE                => 'mit',
+    META_MERGE             => {
+        test_requires      => {
+            'Test::More'   => 0.88,
+            'Test::Tester' => 0,
+            'warnings'     => 0,
+            'strict'       => 0,
         },
-        resources        => {
-            repository   => 'git://github.com/Abigail/Test-Regexp.git',
+        resources          => {
+            repository     => 'git://github.com/Abigail/Test-Regexp.git',
         },
-        keywords         => ['regular expression', 'pattern', 'regexp', 'test',
-                             'tests'],
+        keywords           => ['regular expression', 'pattern', 'regexp',
+                               'test', 'tests'],
     },
 );
 
