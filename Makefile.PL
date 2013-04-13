@@ -29,7 +29,7 @@ my %args = (
             'strict'     => 0,
         },
         resources        => {
-            repository   => 'git://github.com/Abigail/test--regexp.git',
+            repository   => 'git://github.com/Abigail/Test-Regexp.git',
         },
         keywords         => ['regular expression', 'pattern', 'regexp', 'test',
                              'tests'],

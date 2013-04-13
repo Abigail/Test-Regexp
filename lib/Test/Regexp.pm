@@ -774,7 +774,7 @@ the rewrite of C<< Regexp::Common >>.
 =head1 DEVELOPMENT
 
 The current sources of this module are found on github,
-L<< git://github.com/Abigail/test--regexp.git >>.
+L<< git://github.com/Abigail/Test-Regexp.git >>.
 
 =head1 AUTHOR
 
