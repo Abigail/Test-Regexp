@@ -35,6 +35,7 @@ sub escape;
 # comment:   (Optional) 'comment' or 'name' option passed to "match".
 # keep:      (Optional) If true, the pattern is a keep pattern.
 # reason:    (Optional) The "reason" parameter passed to "match".
+# todo:      (Optional) Todo tests, with reason.
 #
 sub check {
     my %arg = @_;
@@ -51,23 +52,26 @@ sub check {
     my $reason    = $arg {reason};
     my $test      = $arg {test};
     my $line      = $arg {line};
+    my $todo      = $arg {todo};
     
     my $op        = $match ? "=~" : "!~";
     my $name      = qq {"$subject" $op /$pattern/};
 
     $expected = [split // => $expected] unless ref $expected;
 
-    ok !$premature, "No preceeding garbage";
+    pass "Checking tests";
+
+    ok !$premature, "    No preceeding garbage";
 
     #
     # Number of tests?
     #
     if (@$results == @$expected) {
-        pass "$name: number of tests";
+        pass "    $name: number of tests";
     }
     else {
-        fail sprintf "%s: Got %d tests, expected %d tests" =>
-                     $name, scalar @$results, scalar @$expected;
+        fail sprintf "    %s: Got %d tests, expected %d tests" =>
+                         $name, scalar @$results, scalar @$expected;
     }
 
     #
@@ -76,7 +80,12 @@ sub check {
     my $match_res_bool =  $match_res                   ? 1 : 0;
     my $expected_bool  = (grep {$_ eq 'F'} @$expected) ? 0 : 1;
 
-    is $match_res_bool, $expected_bool, "$name: (no)match value";
+    if (defined $todo) {
+        pass "    Todo test";
+    }
+    else {
+        is $match_res_bool, $expected_bool, "    $name: (no)match value";
+    }
 
     for (my $i = 0; $i < @$results; $i ++) {
         my $result  =  $$results  [$i];
@@ -87,7 +96,7 @@ sub check {
            $comment =  "Skipped" if $$result {type} eq 'skip';
 
         ok $ok && $exp =~ /[PS]/ ||
-          !$ok && $exp =~ /[FS]/, "$name: sub-test ($comment)";
+          !$ok && $exp =~ /[FS]/, "    $name: sub-test ($comment)";
     }
     #
     # Check the name of the first test
@@ -103,7 +112,7 @@ sub check {
                                        if defined $test   &&  $match;
        $exp_comment  = escape $exp_comment;
 
-    is $test_name, $exp_comment, "Test name";
+    is $test_name, $exp_comment, "    Test name";
 }
 
 

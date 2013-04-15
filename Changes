@@ -1,3 +1,7 @@
+Version 2013041501 Mon Apr 15 23:45:33 CEST 2013
++ Add Test::Tester to test_requires
++ Added a "todo" parameter to match()
+
 Version 2013041201 Fri Apr 12 23:05:10 CEST 2013
 + Made the 'full_text' option to work.
 

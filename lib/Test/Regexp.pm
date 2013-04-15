@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2013041201';
+our $VERSION = '2013041501';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -162,6 +162,7 @@ sub todo {
 #                  to match. Defaults to 1.
 #   reason         The reason a match should fail.
 #   test           What is tested.                  
+#   todo           This test is a todo test; argument is the reason.
 #   show_line      Show file name/line number of call to 'match'.
 #   full_text      Don't shorten long messages.
 #
@@ -186,6 +187,7 @@ sub match {
                                        : "";
     my $show_line      = $arg {show_line};
     my $full_text      = $arg {full_text};
+    my $todo           = $arg {todo};
 
     my $ghost_num_captures  = $arg {ghost_num_captures}  // 0;
     my $ghost_name_captures = $arg {ghost_name_captures} // 0;
@@ -235,6 +237,8 @@ sub match {
                     match     => $match,
                     show_line => $show_line,
                     full_text => $full_text;
+
+    $Test -> todo_start ($todo) if defined $todo;
 
     #
     # Now we will do the tests.
@@ -418,6 +422,9 @@ sub match {
                              "$comment (with -Keep)$reason");
         }
     }
+
+    $Test -> todo_end if defined $todo;
+
     $pass;
 }
 
@@ -449,6 +456,7 @@ fieldhash my %reason;
 fieldhash my %test;
 fieldhash my %show_line;
 fieldhash my %full_text;
+fieldhash my %todo;
 fieldhash my %ghost_num_captures;
 fieldhash my %ghost_name_captures;
 
@@ -467,6 +475,7 @@ sub init {
     $test                {$self} = $arg {test};
     $show_line           {$self} = $arg {show_line};
     $full_text           {$self} = $arg {full_text};
+    $todo                {$self} = $arg {todo};
     $ghost_num_captures  {$self} = $arg {ghost_num_captures};
     $ghost_name_captures {$self} = $arg {ghost_name_captures};
 
@@ -487,6 +496,7 @@ sub args {
         test                => $test                {$self},
         show_line           => $show_line           {$self},
         full_text           => $full_text           {$self},
+        todo                => $todo                {$self},
         ghost_num_captures  => $ghost_num_captures  {$self},
         ghost_name_captures => $ghost_name_captures {$self},
     )
@@ -721,6 +731,11 @@ test.
 If the match is expected to pass (when C<< match >> is called, without
 C<< match >> being false), and this option is passed, a message is printed
 indicating what this specific test is testing (the argument to C<< test >>).
+
+=item C<< todo => STRING >>
+
+If the C<< todo >> parameter is used (with a defined value), the tests
+are assumed to be TODO tests. The argument is used as the TODO message.
 
 =item C<< full_text => BOOL >>
 
