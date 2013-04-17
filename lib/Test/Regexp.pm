@@ -374,7 +374,8 @@ sub match {
                     $pass = 0 unless
                         $Test -> is_num (scalar @{$minus {$key} || []},
                                  scalar @$value, "$__${__}capture '$key' has " .
-                                 @$value . " matches");
+                                 (@$value == 1 ? "1 match" :
+                                        @$value . " matches"));
                 }
                 #
                 # Test for the right number of captures.
@@ -405,8 +406,11 @@ sub match {
                 $pass = 0 unless
                     $Test -> is_num (scalar @numbered_matches,
                                      scalar @$aa_captures,
-                                     $__ . @$aa_captures .
-                                     " numbered captured groups");
+                                     $__ .
+                                     (@$aa_captures == 1           ?
+                                        "1 numbered capture group" :
+                                     @$aa_captures .
+                                         " numbered capture groups"));
             }
         }
 
