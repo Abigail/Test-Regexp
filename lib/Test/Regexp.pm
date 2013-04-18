@@ -189,11 +189,8 @@ sub match {
     my $full_text      = $arg {full_text};
     my $todo           = $arg {todo};
 
-    my $ghost_num_captures  = $arg {ghost_num_captures}  // 0;
-    my $ghost_name_captures = $arg {ghost_name_captures} // 0;
-
-    my $aa_captures;
-    my $hh_captures;
+    my $numbered_captures;
+    my $named_captures;
 
     my $pass           = 1;
 
@@ -205,30 +202,25 @@ sub match {
     #
     # Ghost matches are (named) captures whose name we do not know.
     #
-    my $ghost_captures = 0;
     foreach my $capture (@$captures) {
         if (ref $capture eq 'ARRAY') {
             my ($name, $match) = @$capture;
-            push @$aa_captures => $match;
-            if (!defined $name) {
-                $ghost_captures ++;
-            }
-            elsif ($name =~ /^[a-zA-Z0-9_]+$/) {
-                push @{$$hh_captures {$name}} => $match;
-            }
+            push   @$numbered_captures => $match;
+            push @{$$named_captures {$name}} => $match;
         }
         else {
-            push @$aa_captures => $capture;
+            push @$numbered_captures => $capture;
         }
     }
     
-    $aa_captures ||= [];
-    $hh_captures ||= {};
+    $numbered_captures ||= [];
+    $named_captures    ||= {};
 
     #
     # Delete trailing undefs.
     #
-    pop @$aa_captures while @$aa_captures && !defined $$aa_captures [-1];
+    pop @$numbered_captures while @$numbered_captures &&
+                         !defined $$numbered_captures [-1];
 
     my @todo = todo subject   => $subject,
                     comment   => $comment,
@@ -266,9 +258,6 @@ sub match {
                 #
                 my $named_matches  = 0;
                    $named_matches += @$_ for values %-;
-                my $unexpected = $ghost_num_captures || $ghost_name_captures ?
-                                 "unexpected " : "";
-
 
                 unless ($Test -> is_eq ($&, $subject,
                                        "${__}match is complete")) {
@@ -278,12 +267,11 @@ sub match {
                 }
                  
                 $pass = 0 unless
-                    $Test -> is_eq (scalar @+, 
-                                    1 + $ghost_num_captures,
-                                    "${__}no ${unexpected}numbered captures");
+                    $Test -> is_eq (scalar @+, 1,
+                                    "${__}no numbered captures");
                 $pass = 0 unless
-                    $Test -> is_eq ($named_matches, $ghost_name_captures,
-                                   "${__}no ${unexpected}named captures");
+                    $Test -> is_eq ($named_matches, 0,
+                                   "${__}no named captures");
             }
         }
 
@@ -308,12 +296,12 @@ sub match {
                 my $nr_of_tests  = 0;
                    $nr_of_tests += 1;  # For match.
                    $nr_of_tests += 1;  # For match complete.
-                   $nr_of_tests += @{$_} for values %$hh_captures;
+                   $nr_of_tests += @{$_} for values %$named_captures;
                                        # Number of named captures.
-                   $nr_of_tests += scalar keys %$hh_captures;
+                   $nr_of_tests += scalar keys %$named_captures;
                                        # Number of different named captures.
                    $nr_of_tests += 1;  # Right number of named captures.
-                   $nr_of_tests += @$aa_captures;
+                   $nr_of_tests += @$numbered_captures;
                                        # Number of numbered captures.
                    $nr_of_tests += 1;  # Right number of numbered captures.
 
@@ -362,7 +350,7 @@ sub match {
                 #
                 # Test named captures.
                 #
-                while (my ($key, $value) = each %$hh_captures) {
+                while (my ($key, $value) = each %$named_captures) {
                     for (my $i = 0; $i < @$value; $i ++) {
                         $pass = 0 unless
                             $Test -> is_eq (
@@ -382,34 +370,30 @@ sub match {
                 #
                 $pass = 0 unless
                     $Test -> is_num (scalar keys %minus,
-                                     $ghost_name_captures + keys %$hh_captures,
-                              $__ . scalar (keys %$hh_captures)
+                                     scalar keys %$named_captures,
+                              $__ . scalar (keys %$named_captures)
                                   . " named capture groups"
-                                  . ($ghost_name_captures
-                                          ? "; $ghost_name_captures " .
-                                            "ghost captures"
-                                          : "")
                     );
 
 
                 #
                 # Test numbered captures.
                 #
-                for (my $i = 0; $i < @$aa_captures; $i ++) {
+                for (my $i = 0; $i < @$numbered_captures; $i ++) {
                     $pass = 0 unless
                         $Test -> is_eq ($numbered_matches [$i],
-                                        $$aa_captures [$i],
+                                        $$numbered_captures [$i],
                                        "${__}\$" . ($i + 1) . " " .
-                                        mess ($$aa_captures [$i],
+                                        mess ($$numbered_captures [$i],
                                                 full_text => $full_text));
                 }
                 $pass = 0 unless
                     $Test -> is_num (scalar @numbered_matches,
-                                     scalar @$aa_captures,
+                                     scalar @$numbered_captures,
                                      $__ .
-                                     (@$aa_captures == 1           ?
+                                     (@$numbered_captures == 1     ?
                                         "1 numbered capture group" :
-                                     @$aa_captures .
+                                      @$numbered_captures .
                                          " numbered capture groups"));
             }
         }
@@ -461,8 +445,6 @@ fieldhash my %test;
 fieldhash my %show_line;
 fieldhash my %full_text;
 fieldhash my %todo;
-fieldhash my %ghost_num_captures;
-fieldhash my %ghost_name_captures;
 fieldhash my %tags;
 
 sub init {
@@ -481,8 +463,6 @@ sub init {
     $show_line           {$self} = $arg {show_line};
     $full_text           {$self} = $arg {full_text};
     $todo                {$self} = $arg {todo};
-    $ghost_num_captures  {$self} = $arg {ghost_num_captures};
-    $ghost_name_captures {$self} = $arg {ghost_name_captures};
     $tags                {$self} = $arg {tags} if exists $arg {tags};
 
     $self;
@@ -503,8 +483,6 @@ sub args {
         show_line           => $show_line           {$self},
         full_text           => $full_text           {$self},
         todo                => $todo                {$self},
-        ghost_num_captures  => $ghost_num_captures  {$self},
-        ghost_name_captures => $ghost_name_captures {$self},
     )
 }
 
@@ -757,10 +735,6 @@ are assumed to be TODO tests. The argument is used as the TODO message.
 
 By default, long test messages are truncated; if a true value is passed, 
 the message will not get truncated.
-
-=item C<< ghost_num_captures => INTEGER >>, C<< ghost_name_captures => INTEGER >>
-
-Undocumented features, subject to change.
 
 =back
 

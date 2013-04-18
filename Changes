@@ -1,6 +1,7 @@
 Version 2013041801
 + Made a 'name' accessor for Test::Regexp::Object
 + Allow objects to store "tags".
++ Remove ghost_num_captures and ghost_name_captures.
 
 Version 2013041501 Mon Apr 15 23:45:33 CEST 2013
 + Add Test::Tester to test_requires
