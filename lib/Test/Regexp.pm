@@ -219,8 +219,8 @@ sub match {
     #
     # Delete trailing undefs.
     #
-    pop @$numbered_captures while @$numbered_captures &&
-                         !defined $$numbered_captures [-1];
+#   pop @$numbered_captures while @$numbered_captures &&
+#                        !defined $$numbered_captures [-1];
 
     my @todo = todo subject   => $subject,
                     comment   => $comment,
