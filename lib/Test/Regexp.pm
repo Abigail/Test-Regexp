@@ -463,6 +463,7 @@ fieldhash my %full_text;
 fieldhash my %todo;
 fieldhash my %ghost_num_captures;
 fieldhash my %ghost_name_captures;
+fieldhash my %tags;
 
 sub init {
     my $self = shift;
@@ -482,6 +483,7 @@ sub init {
     $todo                {$self} = $arg {todo};
     $ghost_num_captures  {$self} = $arg {ghost_num_captures};
     $ghost_name_captures {$self} = $arg {ghost_name_captures};
+    $tags                {$self} = $arg {tags} if exists $arg {tags};
 
     $self;
 }
@@ -527,6 +529,15 @@ sub no_match {
 }
 
 sub name {$name {+shift}}
+
+sub set_tag {
+    my $self = shift;
+    $tags {$self} {$_ [0]} = $_ [1];
+}
+sub tag {
+    my $self = shift;
+    $tags {$self} {$_ [0]};
+}
 
 
 

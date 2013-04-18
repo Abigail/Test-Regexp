@@ -1,5 +1,7 @@
 =============
 
 - Test "full_text".
+- Test tags.
+- Test the 'name' accessor.
 - Do something sensible when no comment is given.
 - Use nested tests.
