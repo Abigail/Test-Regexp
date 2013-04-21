@@ -75,12 +75,16 @@ if (open my $fh, "<", "Changes") {
         is $version, $main_version => "      Version matches package version";
     }
     else {
+      SKIP: {
         fail "First line of Changes files correctly formatted: $first";
-    }
+        skip "Cannot extract a correctly formatted version", 2;
+    }}
 }
 else {
-    fail "Failed to open Changes file: $!"
-}
+  SKIP: {
+    fail "Failed to open Changes file: $!";
+    skip "Cannot open Changes file", 2;
+}}
 
 done_testing;
 
