@@ -52,8 +52,13 @@ foreach my $file (@files, "README") {
 
     pass "Found version $version in $base";
 
-    ok $version le $main_version,
-      "      It does not exceed package version";
+    if ($file eq 'README') {
+        is $version, $main_version, "Version in README matches package version"
+    }
+    else {
+        ok $version le $main_version,
+          "      It does not exceed package version";
+    }
 }
 
 my %monthmap = qw [Jan 01 Feb 02 Mar 03 Apr 04 May 05 Jun 06
