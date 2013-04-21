@@ -24,5 +24,6 @@ t/230_tags.t
 t/950_pod.t
 t/960_pod_coverage.t
 t/980_versions.t
+t/981_permissions.t
 t/982_git.t
 t/Common.pm
