@@ -12,6 +12,8 @@ use t::Common;
 
 
 while (<DATA>) {
+    state $c = 0;
+    $c ++;
     chomp;
     m {^\h* (?|"(?<subject>[^"]*)"|(?<subject>\S+))
         \h+ (?|/(?<pattern>[^/]*)/|(?<pattern>\S+))
@@ -24,8 +26,11 @@ while (<DATA>) {
     my $match_val = $match =~ /[ym1]/i;
 
     my $checker = Test::Regexp:: -> new -> init (
-        pattern => $pattern,
+        pattern =>  $pattern,
+        name    => "Name: $c",
     );
+
+    Test::More::is $checker -> name, "Name: $c", "Object has a name";
 
     my $match_res;
     my $method = $match_val ? "match" : "no_match";
@@ -34,12 +39,13 @@ while (<DATA>) {
     };
 
     check results   => \@results,
-          premature => $premature,
-          expected  => $expected,
-          match     => $match_val,
-          match_res => $match_res,
-          pattern   => $pattern,
-          subject   => $subject,
+          premature =>  $premature,
+          expected  =>  $expected,
+          match     =>  $match_val,
+          match_res =>  $match_res,
+          pattern   =>  $pattern,
+          subject   =>  $subject,
+          comment   => "Name: $c",
     ;
 
 }

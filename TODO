@@ -2,7 +2,6 @@
 
 - Test "full_text".
 - Test tags.
-- Test the 'name' accessor.
 - Test undefined numbered matches from unmatched part of (?|...|...)
 - Document the behaviour of trailing 'undef' captures.
 - Do something sensible when no comment is given.
