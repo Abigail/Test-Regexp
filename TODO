@@ -2,6 +2,5 @@
 
 - Test "full_text".
 - Test undefined numbered matches from unmatched part of (?|...|...)
-- Document the behaviour of trailing 'undef' captures.
 - Do something sensible when no comment is given.
 - Use nested tests.
