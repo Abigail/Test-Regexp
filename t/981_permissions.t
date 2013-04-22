@@ -25,7 +25,7 @@ SKIP: {
         }
       SKIP: {
             my $mode = (stat) [2];
-            skip "Failed to grab permissions of $_", 1;
+            skip "Failed to grab permissions of $_", 1 unless $mode;
             my $perm = $mode & 07777;
 
             is $perm, /\.t/ ? 0755 : 0644, "Permissions of $_"
