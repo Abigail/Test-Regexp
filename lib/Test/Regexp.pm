@@ -195,12 +195,8 @@ sub match {
     my $pass           = 1;
 
     #
-    # First split the captures into a hash and an array so we can
-    # check both $1 and friends, and %-.
-    #
-
-    #
-    # Ghost matches are (named) captures whose name we do not know.
+    # First split the captures into a hash (for named captures) and
+    # an array (for numbered captures) so we can check $1 and friends, and %-.
     #
     foreach my $capture (@$captures) {
         if (ref $capture eq 'ARRAY') {
@@ -215,12 +211,6 @@ sub match {
     
     $numbered_captures ||= [];
     $named_captures    ||= {};
-
-    #
-    # Delete trailing undefs.
-    #
-#   pop @$numbered_captures while @$numbered_captures &&
-#                        !defined $$numbered_captures [-1];
 
     my @todo = todo subject   => $subject,
                     comment   => $comment,
