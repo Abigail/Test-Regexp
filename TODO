@@ -1,5 +1,4 @@
 =============
 
 - Test undefined numbered matches from unmatched part of (?|...|...)
-- Do something sensible when no comment is given.
 - Use nested tests.

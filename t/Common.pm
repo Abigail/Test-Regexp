@@ -103,7 +103,11 @@ sub check {
     #
     my $test_name    = $$results [0] {name} // "";
     my $neg          = $match ? "" : "not ";
-    my $exp_comment  = qq {qq {$subject} ${neg}matched by "$comment"};
+    my $exp_comment  = length ($comment) ? qq {"$comment"}
+                                         : '/' . (ref $pattern ?     $pattern
+                                                               : qr {$pattern})
+                                               . '/';
+       $exp_comment  = qq {qq {$subject} ${neg}matched by $exp_comment};
        $exp_comment .= " (with -Keep)" if $keep;
        $exp_comment .= sprintf " [%s:%d]" => $$line [1], $$line [0] if $line;
        $exp_comment .= sprintf " [Reason: %s]" => $reason

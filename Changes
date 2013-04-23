@@ -1,3 +1,6 @@
+Version 2013042301 Tue Apr 23 15:57:59 CEST 2013
++ Fall back to using the pattern if neither name or comment are given.
+
 Version 2013042101 Sun Apr 21 23:34:57 CEST 2013
 + Made a 'name' accessor for Test::Regexp::Object
 + Allow objects to store "tags".

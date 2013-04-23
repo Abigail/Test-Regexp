@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2013042101';
+our $VERSION = '2013042301';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -103,9 +103,9 @@ sub todo {
 
     my $subject_pretty = pretty $subject, full_text => $full_text;
     my $Comment        = qq {qq {$subject_pretty}};
-       $Comment       .= qq { ${neg}matched by "$comment"$line};
+       $Comment       .= qq { ${neg}matched by "$comment"};
 
-    my @todo = [$subject, $Comment];
+    my @todo = [$subject, $Comment, $line];
 
     #
     # If the subject isn't already UTF-8, and there are characters in
@@ -122,9 +122,9 @@ sub todo {
         if (utf8::upgrade ($subject_utf8)) {
             my $Comment_utf8   = qq {qq {$subject_pretty}};
                $Comment_utf8  .= qq { [UTF-8]};
-               $Comment_utf8  .= qq { ${neg}matched by "$comment"$line};
+               $Comment_utf8  .= qq { ${neg}matched by "$comment"};
 
-            push @todo => [$subject_utf8, $Comment_utf8];
+            push @todo => [$subject_utf8, $Comment_utf8, $line];
         }
     }
     elsif ($downgrade && ($downgrade == 2 ||     utf8::is_utf8 ($subject)
@@ -134,9 +134,9 @@ sub todo {
         if (utf8::downgrade ($subject_non_utf8)) {
             my $Comment_non_utf8  = qq {qq {$subject_pretty}};
                $Comment_non_utf8 .= qq { [non-UTF-8]};
-               $Comment_non_utf8 .= qq { ${neg}matched by "$comment"$line};
+               $Comment_non_utf8 .= qq { ${neg}matched by "$comment"};
 
-            push @todo => [$subject_non_utf8, $Comment_non_utf8];
+            push @todo => [$subject_non_utf8, $Comment_non_utf8, $line];
         }
     }
 
@@ -238,15 +238,21 @@ sub match {
     foreach my $todo (@todo) {
         my $subject = $$todo [0];
         my $comment = $$todo [1];
+        my $line    = $$todo [2];
 
         if ($match && defined $pattern) {
+            my $comment = $comment;
+            my $pat     =  ref $pattern ?     $pattern
+                                        : qr /$pattern/;
+               $comment =~ s{""$}{/$pat/};
+               $comment .= "$line$test";
             #
             # Test match; match should also be complete, and not
             # have any captures.
             #
             SKIP: {
                 my $result = $subject =~ /^$pattern/;
-                unless ($Test -> ok ($result, "$comment$test")) {
+                unless ($Test -> ok ($result, $comment)) {
                     $Test -> skip ("Match failed") for 1 .. 3;
                     $pass = 0;
                     last SKIP;
@@ -277,6 +283,12 @@ sub match {
 
 
         if ($match && defined $keep_pattern) {
+            my $comment = $comment;
+            my $pat     =  ref $keep_pattern ?     $keep_pattern
+                                             : qr /$keep_pattern/;
+               $comment =~ s{""$}{/$pat/};
+               $comment .= " (with -Keep)";
+               $comment .= "$line$test";
             #
             # Test keep. Should match, and the parts as well.
             #
@@ -308,7 +320,7 @@ sub match {
                 my ($amp, @numbered_matches, %minus);
 
                 my $result = $subject =~ /^$keep_pattern/;
-                unless ($Test -> ok ($result, "$comment (with -Keep)$test")) {
+                unless ($Test -> ok ($result, $comment)) {
                     $Test -> skip ("Match failed") for 2 .. $nr_of_tests;
                     $pass = 0;
                     last SKIP;
@@ -399,15 +411,25 @@ sub match {
         }
 
         if (!$match && defined $pattern) {
+            my $comment = $comment;
+            my $pat     =  ref $pattern ?     $pattern
+                                        : qr /$pattern/;
+               $comment =~ s{""$}{/$pat/};
+               $comment .= "$line$reason";
             my $r = $subject =~ /^$pattern/;
             $pass = 0 unless
-                $Test -> ok (!$r || $subject ne $&, "$comment$reason");
+                $Test -> ok (!$r || $subject ne $&, $comment);
         }
         if (!$match && defined $keep_pattern) {
+            my $comment = $comment;
+            my $pat     =  ref $keep_pattern ?     $keep_pattern
+                                             : qr /$keep_pattern/;
+               $comment =~ s{""$}{/$pat/};
+               $comment .= " (with -Keep)";
+               $comment .= "$line$reason";
             my $r = $subject =~ /^$keep_pattern/;
             $pass = 0 unless
-                $Test -> ok (!$r || $subject ne $&,
-                             "$comment (with -Keep)$reason");
+                $Test -> ok (!$r || $subject ne $&, $comment);
         }
     }
 
