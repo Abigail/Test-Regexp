@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2013042301';
+our $VERSION = '2014052301';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -188,6 +188,7 @@ sub match {
     my $show_line      = $arg {show_line};
     my $full_text      = $arg {full_text};
     my $todo           = $arg {todo};
+    my $keep_message   = $arg {no_keep_message} ? "" : " (with -Keep)";
 
     my $numbered_captures;
     my $named_captures;
@@ -277,7 +278,7 @@ sub match {
             my $pat     =  ref $keep_pattern ?     $keep_pattern
                                              : qr /$keep_pattern/;
                $comment =~ s{""$}{/$pat/};
-               $comment .= " (with -Keep)";
+               $comment .= $keep_message;
                $comment .= "$line$test";
             #
             # Test keep. Should match, and the parts as well.
@@ -415,7 +416,7 @@ sub match {
             my $pat     =  ref $keep_pattern ?     $keep_pattern
                                              : qr /$keep_pattern/;
                $comment =~ s{""$}{/$pat/};
-               $comment .= " (with -Keep)";
+               $comment .= $keep_message;
                $comment .= "$line$reason";
             my $r = $subject =~ /^$keep_pattern/;
             $pass = 0 unless
@@ -458,6 +459,7 @@ fieldhash my %show_line;
 fieldhash my %full_text;
 fieldhash my %todo;
 fieldhash my %tags;
+fieldhash my %no_keep_message;
 
 sub init {
     my $self = shift;
@@ -476,6 +478,7 @@ sub init {
     $full_text           {$self} = $arg {full_text};
     $todo                {$self} = $arg {todo};
     $tags                {$self} = $arg {tags} if exists $arg {tags};
+    $no_keep_message     {$self} = $arg {no_keep_message};
 
     $self;
 }
@@ -495,6 +498,7 @@ sub args {
         show_line           => $show_line           {$self},
         full_text           => $full_text           {$self},
         todo                => $todo                {$self},
+        no_keep_message     => $no_keep_message     {$self},
     )
 }
 
@@ -747,6 +751,12 @@ are assumed to be TODO tests. The argument is used as the TODO message.
 
 By default, long test messages are truncated; if a true value is passed, 
 the message will not get truncated.
+
+=item C<< no_keep_message => BOOL >>
+
+If matching against a I<< keeping >> pattern, a message C<< (with -Keep) >>
+is added to the comment. Setting this parameter surpresses this message.
+Mostly useful for C<< Regexp::Common510 >>.
 
 =back
 

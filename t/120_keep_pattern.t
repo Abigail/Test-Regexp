@@ -16,6 +16,7 @@ sub init_data;
 my @data   = init_data;
 
 
+my $seen;
 foreach my $data (@data) {
     my ($subject, $pattern, $match, $expected, $captures) = @$data;
 
@@ -37,6 +38,25 @@ foreach my $data (@data) {
           subject   => $subject,
           keep      =>  1,
     ;
+
+    if ($match_res && ! $seen ++) {
+        my ($premature, @results) = run_tests sub {
+            $match_res = match subject         =>  $subject,
+                               keep_pattern    =>  $pattern,
+                               no_keep_message => 1,
+                               match           =>  $match_val,
+                               captures        =>  $captures,
+        };
+
+        check results   => \@results,
+              premature => $premature,
+              expected  => $expected,
+              match     => $match_val,
+              match_res => $match_res,
+              pattern   => $pattern,
+              subject   => $subject,
+        ;
+    }
 }
 
 #
