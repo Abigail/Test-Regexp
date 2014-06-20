@@ -12,7 +12,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2014052301';
+our $VERSION = '2014062001';
 
 BEGIN {
     binmode STDOUT, ":utf8";
@@ -32,16 +32,14 @@ sub import {
     $arg {import} //= [qw [match no_match]];
 
     while (my ($key, $value) = each %arg) {
-        given ($key) {
-            when ("tests") {
-                $Test -> plan ($value);
-            }
-            when ("import") {
-                $self -> export_to_level (1, $self, $_) for @{$value || []};
-            }
-            default {
-                die "Unknown option '$key'\n";
-            }
+        if ($key eq "tests") {
+            $Test -> plan ($value);
+        }
+        elsif ($key eq "import") {
+            $self -> export_to_level (1, $self, $_) for @{$value || []};
+        }
+        else {
+            die "Unknown option '$key'\n";
         }
     }
 }
