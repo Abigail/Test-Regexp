@@ -67,7 +67,7 @@ my %monthmap = qw [Jan 01 Feb 02 Mar 03 Apr 04 May 05 Jun 06
 if (open my $fh, "<", "Changes") {
     my $first = <$fh>;
     if ($first =~
-       /^Version ([0-9]{10}) \S+ (\S+) +([0-9]{0,2}) \S+ \S+ ([0-4]{4})/) {
+       /^Version ([0-9]{10}) \S+ (\S+) +([0-9]{0,2}) \S+ \S+ ([0-9]{4})/) {
         my ($version, $month, $date, $year) = ($1, $2, $3, $4);
         pass "Version line in Changes file formatted ok";
         my $target = sprintf "%04d%02d%02d" => $year, $monthmap {$month}, $date;
