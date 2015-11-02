@@ -18,7 +18,7 @@ while (<DATA>) {
         \h+ (?<match>(?i:[ymn01]))
         \h+ (?<result>[PFS]+)
         \h* (?:$|\#)}x or next;
-    my ($subject, $pattern, my ($match, $expected)) =
+    my ($subject, $pattern, $match, $expected) =
         @+ {qw [subject pattern match result]};
 
     my $match_val = $match =~ /[ym1]/i;
