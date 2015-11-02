@@ -19,6 +19,7 @@ SKIP: {
     };
     while (<$fh>) {
         chomp;
+        s/\s+Module.*//;
         unless (-e) {
             fail "$_ does not exist";
             next;
