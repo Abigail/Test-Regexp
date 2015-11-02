@@ -1,4 +1,5 @@
-Version 2014062001
+Version 2015110201 Mon Nov  2 21:34:52 CET 2015
++ Removed a my() inside a my(). This is a new failure in 5.23.*
 + Eliminate the use of given
 
 Version 2014052301 Fri May 23 20:49:03 CEST 2014
