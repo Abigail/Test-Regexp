@@ -1,4 +1,4 @@
-Version 2016052701 
+Version 2016052701 Fri May 27 19:46:42 CEST 2016
 + Allow specifying how you want display characters which aren't printable
   ASCII characters. It used to be displayed as hex escapes. We know also
   allow named escapes, "as is", \n/\r/\t only or "only escape non-printable
