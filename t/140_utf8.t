@@ -6,6 +6,11 @@ no  warnings 'syntax';
 
 use 5.010;
 
+BEGIN {
+    binmode STDOUT, ":utf8" or die;
+    binmode STDERR, ":utf8" or die;
+}
+
 use Test::Tester;
 use Test::Regexp;
 use t::Common;
@@ -34,25 +39,35 @@ foreach my $data (@data) {
         foreach my $args ([], [utf8_upgrade => 0], [utf8_downgrade => 0]) {
             my $match_val = $match =~ /[ym1]/i;
 
-            my ($premature, @results) = run_tests sub {
-                $match_res = match subject    =>  $subject2,
-                                   $param     =>  $pattern,
-                                   match      =>  $match_val,
-                                   captures   =>  $captures,
-                                   @$args,
-            };
-
             my $expected = shift @$expected_l;
 
-            check results     => \@results,
-                  premature   =>  $premature,
-                  expected    =>  $expected,
-                  match       =>  $match_val,
-                  match_res   =>  $match_res,
-                  pattern     =>  $pattern,
-                  subject     =>  $subject2,
-                  keep        =>  $keep,
-            ;
+            #
+            # For now, we aren't testing without any escaping -- this
+            # requires some special handling of newlines to not upset
+            # run_test.
+            #
+            foreach my $escape (1 .. 4) {
+
+                my ($premature, @results) = run_tests sub {
+                    $match_res = match subject    =>  $subject2,
+                                       $param     =>  $pattern,
+                                       match      =>  $match_val,
+                                       captures   =>  $captures,
+                                       escape     =>  $escape,
+                                       @$args,
+                };
+
+                check results     => \@results,
+                      premature   =>  $premature,
+                      expected    =>  $expected,
+                      match       =>  $match_val,
+                      match_res   =>  $match_res,
+                      pattern     =>  $pattern,
+                      subject     =>  $subject2,
+                      keep        =>  $keep,
+                      escape      =>  $escape,
+                ;
+            }
         }
     }
 }

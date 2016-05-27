@@ -2,8 +2,13 @@ package Test::Regexp;
 
 use 5.010;
 
+BEGIN {
+    binmode STDOUT, ":utf8";
+}
+
 use strict;
 use warnings;
+use charnames ":full";
 no  warnings 'syntax';
 
 use Exporter ();
@@ -14,12 +19,16 @@ our @ISA     = qw [Exporter Test::More];
 
 our $VERSION = '2015110201';
 
-BEGIN {
-    binmode STDOUT, ":utf8";
-}
-
 
 my $Test = Test::Builder -> new;
+
+my $ESCAPE_NONE           = 0;
+my $ESCAPE_WHITE_SPACE    = 1;
+my $ESCAPE_NAMES          = 2;
+my $ESCAPE_CODES          = 3;
+my $ESCAPE_NON_PRINTABLE  = 4;
+my $ESCAPE_DEFAULT        = ${^UNICODE} ? $ESCAPE_NON_PRINTABLE 
+                                        : $ESCAPE_CODES;
 
 sub import {
     my $self = shift;
@@ -48,11 +57,26 @@ sub import {
 my $__ = "    ";
 
 sub escape {
-    my $str = shift;
+    my ($str, $escape) = @_;
+    $escape //= $ESCAPE_DEFAULT;
+    return $str if $escape == $ESCAPE_NONE;
     $str =~ s/\n/\\n/g;
     $str =~ s/\t/\\t/g;
     $str =~ s/\r/\\r/g;
-    $str =~ s/([^\x20-\x7E])/sprintf "\\x{%02X}" => ord $1/eg;
+    if ($escape == $ESCAPE_NAMES) {
+        $str =~ s{([^\x20-\x7E])}
+                 {my $name = charnames::viacode (ord $1);
+                  $name ? sprintf "\\N{%s}"   => $name
+                        : sprintf "\\x{%02X}" => ord $1}eg;
+    }
+    elsif ($escape == $ESCAPE_CODES) {
+        $str =~ s{([^\x20-\x7E])}
+                 {sprintf "\\x{%02X}" => ord $1}eg;
+    }
+    elsif ($escape == $ESCAPE_NON_PRINTABLE) {
+        $str =~ s{([\x00-\x1F\xFF])}
+                 {sprintf "\\x{%02X}" => ord $1}eg;
+    }
     $str;
 }
 
@@ -60,7 +84,7 @@ sub pretty {
     my $str = shift;
     my %arg = @_;
     substr ($str, 50, -5, "...") if length $str > 55 && !$arg {full_text};
-    $str = escape $str;
+    $str = escape $str, $arg {escape};
     $str;
 }
 
@@ -69,7 +93,8 @@ sub mess {
     my $val = shift;
     unless (defined $val) {return 'undefined'}
     my %arg = @_;
-    my $pretty = pretty $val, full_text => $arg {full_text};
+    my $pretty = pretty $val, full_text => $arg {full_text},
+                              escape    => $arg {escape};
     if ($pretty eq $val && $val !~ /'/) {
         return "eq '$val'";
     }
@@ -90,6 +115,7 @@ sub todo {
     my $downgrade =  $arg {downgrade};
     my $neg       =  $arg {match} ? "" : "not ";
     my $full_text =  $arg {full_text};
+    my $escape    =  $arg {escape};
 
     my $line      = "";
 
@@ -99,7 +125,8 @@ sub todo {
         $line = " [$file:$l_nr]";
     }
 
-    my $subject_pretty = pretty $subject, full_text => $full_text;
+    my $subject_pretty = pretty $subject, full_text => $full_text,
+                                          escape    => $escape;
     my $Comment        = qq {qq {$subject_pretty}};
        $Comment       .= qq { ${neg}matched by "$comment"};
 
@@ -185,6 +212,7 @@ sub match {
                                        : "";
     my $show_line      = $arg {show_line};
     my $full_text      = $arg {full_text};
+    my $escape         = $arg {escape};
     my $todo           = $arg {todo};
     my $keep_message   = $arg {no_keep_message} ? "" : " (with -Keep)";
 
@@ -217,7 +245,8 @@ sub match {
                     downgrade => $downgrade,
                     match     => $match,
                     show_line => $show_line,
-                    full_text => $full_text;
+                    full_text => $full_text,
+                    escape    => $escape;
 
     $Test -> todo_start ($todo) if defined $todo;
 
@@ -358,7 +387,8 @@ sub match {
                                 $minus {$key} ? $minus {$key} [$i] : undef,
                                 $$value [$i],
                                "${__}\$- {$key} [$i] " .
-                                mess ($$value [$i], full_text => $full_text));
+                                mess ($$value [$i], full_text => $full_text,
+                                                    escape    => $escape));
                     }
                     $pass = 0 unless
                         $Test -> is_num (scalar @{$minus {$key} || []},
@@ -386,7 +416,8 @@ sub match {
                                         $$numbered_captures [$i],
                                        "${__}\$" . ($i + 1) . " " .
                                         mess ($$numbered_captures [$i],
-                                                full_text => $full_text));
+                                                full_text => $full_text,
+                                                escape    => $escape));
                 }
                 $pass = 0 unless
                     $Test -> is_num (scalar @numbered_matches,
@@ -455,6 +486,7 @@ fieldhash my %reason;
 fieldhash my %test;
 fieldhash my %show_line;
 fieldhash my %full_text;
+fieldhash my %escape;
 fieldhash my %todo;
 fieldhash my %tags;
 fieldhash my %no_keep_message;
@@ -474,6 +506,7 @@ sub init {
     $test                {$self} = $arg {test};
     $show_line           {$self} = $arg {show_line};
     $full_text           {$self} = $arg {full_text};
+    $escape              {$self} = $arg {escape};
     $todo                {$self} = $arg {todo};
     $tags                {$self} = $arg {tags} if exists $arg {tags};
     $no_keep_message     {$self} = $arg {no_keep_message};
@@ -495,6 +528,7 @@ sub args {
         test                => $test                {$self},
         show_line           => $show_line           {$self},
         full_text           => $full_text           {$self},
+        escape              => $escape              {$self},
         todo                => $todo                {$self},
         no_keep_message     => $no_keep_message     {$self},
     )
@@ -749,6 +783,48 @@ are assumed to be TODO tests. The argument is used as the TODO message.
 
 By default, long test messages are truncated; if a true value is passed, 
 the message will not get truncated.
+
+=item C<< escape => INTEGER >>
+
+Controls how non-ASCII and non-printables are displayed in generated
+test messages:
+
+=over 2
+
+=item B<< 0 >>
+
+No characters are escape, everything is displayed as is.
+
+=item B<< 1 >>
+
+Show newlines, linefeeds and tabs using their usual escape sequences
+(C<< \n >>, C<< \r >>, and C<< \t >>).
+
+=item B<< 2 >>
+
+Show any character outside of the printable ASCII characters as named
+escapes (C<< \N{UNICODE NAME} >>), or a hex escape if the unicode name
+is not found (C<< \x{XX} >>). This is the default if C<< -CO >> is not in
+effect (C<< ${^UNICODE} >> is false).
+
+Newlines, linefeeds and tabs are displayed as above.
+
+=item B<< 3 >>
+
+Show any character outside of the printable ASCII characters as hext
+escapes (C<< \x{XX} >>).
+
+Newlines, linefeeds and tabs are displayed as above.
+
+=item B<< 4 >>
+
+Show the non-printable ASCII characters as hex escapes (C<< \x{XX} >>);
+any non-ASCII character is displayed as is. This is the default if
+C<< -CO >> is in effect (C<< ${^UNICODE} >> is true).
+
+Newlines, linefeeds and tabs are displayed as above.
+
+=back
 
 =item C<< no_keep_message => BOOL >>
 

@@ -9,6 +9,8 @@ use 5.010;
 use Test::More;
 use Exporter ();
 
+use charnames ":full";
+
 our @EXPORT    = qw [check];
 our @EXPORT_OK = qw [$count $comment $failures $reason $test $line];
 our @ISA       = qw [Exporter];
@@ -23,6 +25,13 @@ our $line;
 
 sub escape;
 
+my $ESCAPE_NONE           = 0;
+my $ESCAPE_WHITE_SPACE    = 1;
+my $ESCAPE_NAMES          = 2;
+my $ESCAPE_CODES          = 3;
+my $ESCAPE_NON_PRINTABLE  = 4;
+
+
 #
 # results:    Arrayref with test results (from Test::Tester)
 # premature:  Anything appearing before test results (from Test::Tester)
@@ -36,6 +45,7 @@ sub escape;
 # keep:      (Optional) If true, the pattern is a keep pattern.
 # reason:    (Optional) The "reason" parameter passed to "match".
 # todo:      (Optional) Todo tests, with reason.
+# escape:    (Optional) Escape style used
 #
 sub check {
     my %arg = @_;
@@ -53,6 +63,8 @@ sub check {
     my $test      = $arg {test};
     my $line      = $arg {line};
     my $todo      = $arg {todo};
+    my $escape    = $arg {escape} // (${^UNICODE} ? $ESCAPE_NON_PRINTABLE
+                                                  : $ESCAPE_CODES);
     
     my $op        = $match ? "=~" : "!~";
     my $name      = qq {"$subject" $op /$pattern/};
@@ -114,18 +126,39 @@ sub check {
                                        if defined $reason && !$match;
        $exp_comment .= sprintf " [Test: %s]"   => $test
                                        if defined $test   &&  $match;
-       $exp_comment  = escape $exp_comment;
+       $exp_comment  = escape $exp_comment, $escape;
 
     is $test_name, $exp_comment, "    Test name";
 }
 
 
+#
+# Almost an identical copy from Test::Common. Better would be a
+# different implementation.
+#
 sub escape {
-    my $str = shift;
+    my ($str, $escape) = @_;
+    return if $escape == $ESCAPE_NONE;
+
     $str =~ s/\n/\\n/g;
     $str =~ s/\t/\\t/g;
     $str =~ s/\r/\\r/g;
-    $str =~ s/([^\x20-\x7E])/sprintf "\\x{%02X}" => ord $1/eg;
+
+    if ($escape == $ESCAPE_NAMES) {
+        $str =~ s{([^\x20-\x7E])}
+                 {my $name = charnames::viacode (ord $1);
+                  $name ? sprintf "\\N{%s}"   => $name
+                        : sprintf "\\x{%02X}" => ord $1}eg;
+    }
+    elsif ($escape == $ESCAPE_CODES) {
+        $str =~ s{([^\x20-\x7E])}
+                 {sprintf "\\x{%02X}" => ord $1}eg;
+    }
+    elsif ($escape == $ESCAPE_NON_PRINTABLE) {
+        $str =~ s{([\x00-\x1F\xFF])}
+                 {sprintf "\\x{%02X}" => ord $1}eg;   
+    }
+
     $str =~ s/#/\\#/g;   # TAP does this
     $str;
 }
