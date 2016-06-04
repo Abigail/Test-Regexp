@@ -1,3 +1,6 @@
+Version 20160605 Sun Jun  5 00:40:52 CEST 2016
++ Fix POD spelling errors (Salvatore Bonaccorso <carnil@debian.org>)
+
 Version 2016052701 Fri May 27 19:46:42 CEST 2016
 + Allow specifying how you want display characters which aren't printable
   ASCII characters. It used to be displayed as hex escapes. We know also
