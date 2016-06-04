@@ -615,7 +615,7 @@ calling it with C<< match => 0 >>.
 
 =head2 "Complete matching"
 
-A match is only considered to succesfully match if the entire string
+A match is only considered to successfully match if the entire string
 is matched - that is, if C<< $& >> matches the subject string. So:
 
   Subject    Pattern
@@ -698,7 +698,7 @@ import.
 
 The subroutine C<< match >> is the workhorse of the module. It takes
 a number of named arguments, most of them optional, and runs one or
-more tests. It returns 1 if all tests were run succesfully, and 0
+more tests. It returns 1 if all tests were run successfully, and 0
 if one or more tests failed. The following options are available:
 
 =over 4
@@ -829,7 +829,7 @@ Newlines, linefeeds and tabs are displayed as above.
 =item C<< no_keep_message => BOOL >>
 
 If matching against a I<< keeping >> pattern, a message C<< (with -Keep) >>
-is added to the comment. Setting this parameter surpresses this message.
+is added to the comment. Setting this parameter suppresses this message.
 Mostly useful for C<< Regexp::Common510 >>.
 
 =back
