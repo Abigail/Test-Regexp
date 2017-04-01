@@ -6,6 +6,8 @@ no  warnings 'syntax';
 
 use 5.010;
 
+use lib ".";
+
 BEGIN {
     binmode STDOUT, ":utf8" or die;
     binmode STDERR, ":utf8" or die;

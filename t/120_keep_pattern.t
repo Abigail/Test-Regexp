@@ -7,6 +7,8 @@ no  warnings 'syntax';
 
 use 5.010;
 
+use lib ".";
+
 use Test::Tester;
 use Test::Regexp;
 use t::Common;
