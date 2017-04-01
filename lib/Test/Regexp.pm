@@ -17,7 +17,7 @@ use Test::Builder;
 our @EXPORT  = qw [match no_match];
 our @ISA     = qw [Exporter Test::More];
 
-our $VERSION = '2016060501';
+our $VERSION = '2017040101';
 
 
 my $Test = Test::Builder -> new;
