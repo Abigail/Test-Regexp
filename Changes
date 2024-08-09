@@ -1,3 +1,9 @@
+Version 2024080901
++ Significant rewrite.
+    o The "keep_pattern" option has been dropped. This should not have been
+      used outside of testing Regexp::Common anyway, and it's more
+      annoying than useful.
+
 Version 2017040101 Sat Apr  1 14:05:59 CEST 2017
 + Prepare for 5.26
 

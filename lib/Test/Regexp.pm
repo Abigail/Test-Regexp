@@ -601,10 +601,6 @@ package Test::Regexp {
     #   - utf8_downgrade: (Default 1) If true, utf8 downgrade the string as
     #                      part of the test. See todo_encodings ().
     #   - comment:        (Obsolete) Alternative for 'name'.
-    #   - keep_pattern:   (Discouraged) Retained for backwards compatability.
-    #                      If given, recursively calls match(), once with
-    #                      pattern and once with keep_pattern. The first one
-    #                      expecting no captures, the second expecting captures.
     #
     # Return:
     #    1.  True if all tests pass, false otherwise.
@@ -612,30 +608,6 @@ package Test::Regexp {
     sub match (%args) {
 
         $args {__caller} //= [(caller) [2, 1]];
-
-        #
-        # This is some trickery to support keep_pattern. If a keep pattern 
-        # is given, we will call match() recursively, once of twice.
-        # First, if pattern is given as well, we call match() with the
-        # captures and the keep_pattern deleted from the arguments.
-        # Second, we call match() (again) replacing keep_pattern for pattern.
-        #
-        # Note that this counts as *two* tests -- we do not do this in a
-        # a subtest.
-        #
-        if ($args {keep_pattern}) {
-            my $pass = 1;
-            if ($args {pattern}) {
-                my %args = %args;  # Copy
-                delete $args {keep_pattern};
-                delete $args {captures};
-                $pass &&= __SUB__ -> (%args);
-            }
-            my %args = %args;
-            $args {pattern} = delete $args {keep_pattern};
-            $pass &&= __SUB__ -> (%args);
-            return $pass;
-        }
 
         my $pattern = $args {pattern};
         my $subject = $args {subject};
@@ -723,7 +695,6 @@ package Test::Regexp::Object {
     use Hash::Util::FieldHash qw [fieldhash];
 
     fieldhash my %pattern;
-    fieldhash my %keep_pattern;
     fieldhash my %name;
     fieldhash my %comment;
     fieldhash my %utf8_upgrade;
@@ -742,7 +713,6 @@ package Test::Regexp::Object {
         my %arg  = @_;
 
         $pattern             {$self} = $arg {pattern};
-        $keep_pattern        {$self} = $arg {keep_pattern};
         $name                {$self} = $arg {name};
         $comment             {$self} = $arg {comment};
         $utf8_upgrade        {$self} = $arg {utf8_upgrade};
@@ -763,7 +733,6 @@ package Test::Regexp::Object {
         my  $self = shift;
         (
             pattern             => $pattern             {$self},
-            keep_pattern        => $keep_pattern        {$self},
             name                => $name                {$self},
             comment             => $comment             {$self},
             utf8_upgrade        => $utf8_upgrade        {$self},
@@ -832,14 +801,14 @@ Test::Regexp - Test your regular expressions
           pattern      => qr /\w+/;
 
  match    subject      => "Foo bar",
-          keep_pattern => qr /(?<first_word>\w+)\s+(\w+)/,
+          pattern      => qr /(?<first_word>\w+)\s+(\w+)/,
           captures     => [[first_word => 'Foo'], ['bar']];
 
  no_match subject      => "Baz",
           pattern      => qr /Quux/;
 
  $checker = Test::Regexp -> new -> init (
-    keep_pattern => qr /(\w+)\s+\g{-1}/,
+    pattern      => qr /(\w+)\s+\g{-1}/,
     name         => "Double word matcher",
  );
 
@@ -907,15 +876,6 @@ only one test is performed.
 Otherwise (we are expecting a match), if C<< pattern >> is used, there
 will be three tests. 
 
-For C<< keep_pattern >>, there will be four tests, plus one tests for
-each capture, an additional test for each named capture, and a test
-for each name used in the set of named captures. So, if there are
-C<< N >> captures, there will be at least C<< 4 + N >> tests, and
-at most C<< 4 + 3 * N >> tests.
-
-If both C<< pattern >> and C<< keep_pattern >> are used, the number of
-tests add up. 
-
 If C<< Test::Regexp >> decides to upgrade or downgrade, the number of 
 tests double.
 
@@ -955,18 +915,13 @@ if one or more tests failed. The following options are available:
 The string against which the pattern is tested is passed to C<< match >>
 using the C<< subject >> option. It's an error to not pass in a subject.
 
-=item C<< pattern => PATTERN >>, C<< keep_pattern => PATTERN >>
+=item C<< pattern => PATTERN >>
 
-A pattern (aka regular expression) to test can be passed with one of
-C<< pattern >> or C<< keep_pattern >>. The former should be used if the
-pattern does not have any matching parenthesis; the latter if the pattern
-does have capturing parenthesis. If both C<< pattern >> and C<< keep_pattern >>
-are provided, the subject is tested against both. It's an error to not give
-either C<< pattern >> or C<< keep_pattern >>.
+The pattern (aka regular expression) to test with.
 
 =item C<< captures => [LIST] >>
 
-If a regular expression is passed with C<< keep_pattern >> you should 
+If a regular expression is passed with captures you should 
 pass in a list of captures using the C<< captures >> option.
 
 This list should contain all the captures, in order. For unnamed captures,
@@ -978,7 +933,7 @@ may be mixed, and the same name for a capture may be repeated.
 Example:
 
  match  subject      =>  "Eland Wapiti Caribou",
-        keep_pattern =>  qr /(\w+)\s+(?<a>\w+)\s+(\w+)/,
+        pattern      =>  qr /(\w+)\s+(?<a>\w+)\s+(\w+)/,
         captures     =>  ["Eland", [a => "Wapiti"], "Caribou"];
 
 =item C<< name => NAME >>
@@ -1090,7 +1045,6 @@ To construct and initialize the object, call the following:
 
  my $checker = Test::Regexp -> new -> init (
     pattern      => qr  /PATTERN/,
-    keep_pattern => qr /(PATTERN)/,
     ...
  );
 
