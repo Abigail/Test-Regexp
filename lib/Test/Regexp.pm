@@ -217,7 +217,7 @@ package Test::Regexp {
 
     ############################################################################
     #
-    # check_match (%args)
+    # check_match ($args)
     #
     # Check whether the pattern matches the string, and whether the match
     # is complete. If the pattern fails to match, the latter test is not
@@ -231,10 +231,10 @@ package Test::Regexp {
     # Return:
     #    1. True if the tests succeed, false otherwise.
     #
-    my sub check_match (%args) {
-        my $subject  = $args {subject};
-        my $result   = $args {result};
-        my $match    = $args {match};
+    my sub check_match ($args = {}) {
+        my $subject  = $$args {subject};
+        my $result   = $$args {result};
+        my $match    = $$args {match};
 
         $Test -> ok    ($result, "Pattern matches")   &&
         $Test -> is_eq ($match, $subject, "Match is complete");
@@ -317,9 +317,9 @@ package Test::Regexp {
     # Return:
     #    1. True if all tests succeed, false otherwise.
     #
-    my sub named_captures (%args) {
-        my $exp_captures = $args {exp_named_captures} // {};
-        my $got_captures = $args {got_captures}       // {};
+    my sub named_captures ($args = {}) {
+        my $exp_captures = $$args {exp_named_captures} // {};
+        my $got_captures = $$args {got_captures}       // {};
 
         return $Test -> is_eq (scalar keys %$got_captures,
                                scalar keys %$exp_captures,
@@ -343,7 +343,7 @@ package Test::Regexp {
                                           $$exp_captures {$name} [$i],
                                           "\$- {$name} [$i] " .
                                           mess ($$exp_captures {$name} [$i],
-                                                %args));
+                                                %$args));
             }
         }
 
@@ -378,9 +378,9 @@ package Test::Regexp {
     # Return:
     #    1. True if the tests succeed, false otherwise.
     #
-    my sub positional_captures (%args) {
-        my $exp_captures = $args {exp_positional_captures} // [];
-        my $got_captures = $args {got_captures}            // [];
+    my sub positional_captures ($args = {}) {
+        my $exp_captures = $$args {exp_positional_captures} // [];
+        my $got_captures = $$args {got_captures}            // [];
 
         return unless $Test -> is_eq (scalar @$got_captures,
                                       scalar @$exp_captures,
@@ -391,7 +391,7 @@ package Test::Regexp {
             $pass &&= $Test -> is_eq ($$got_captures [$i],
                                       $$exp_captures [$i],
                                       '$' . ($i + 1) . " " .
-                                      mess ($$exp_captures [$i], %args));
+                                      mess ($$exp_captures [$i], %$args));
         }
 
         $pass;
@@ -400,7 +400,7 @@ package Test::Regexp {
 
     ############################################################################
     #
-    # should_not_match (%args)
+    # should_not_match ($args)
     #
     # This is called to test whether a pattern does *not* match.
     # The regular expression match failing is considered a success, and
@@ -414,9 +414,9 @@ package Test::Regexp {
     #    1. True if the pattern fails to completely match the subject,
     #       fails otherwise.
     #
-    my sub should_not_match (%args) {
-        my $subject = $args {subject};
-        my $pattern = $args {pattern};
+    my sub should_not_match ($args = {}) {
+        my $subject = $$args {subject};
+        my $pattern = $$args {pattern};
 
         my $result  = $subject =~ /^$pattern/p;
 
@@ -426,7 +426,7 @@ package Test::Regexp {
 
     ############################################################################
     #
-    # should_match (%args)
+    # should_match ($args)
     #
     # This is called when a pattern should match the subject (and the pattern
     # should match the subject completely).
@@ -448,9 +448,9 @@ package Test::Regexp {
     #    1. True if the pattern completely match the subject, and if all
     #       the capture match the expected captures; fails if any test fails.
     # 
-    my sub should_match (%args) {
-        my $subject = $args {subject};
-        my $pattern = $args {pattern};
+    my sub should_match ($args = {}) {
+        my $subject = $$args {subject};
+        my $pattern = $$args {pattern};
 
         my $result = $subject =~ /^$pattern/p;
 
@@ -471,21 +471,21 @@ package Test::Regexp {
 
         return unless $Test -> subtest ("Match",
                                         \&check_match,
-                                        %args,
-                                        result => $result,
-                                        match  => $match,);
+                                        {%$args,
+                                         result => $result,
+                                         match  => $match});
 
         my $pass = 1;
 
         $pass &&= $Test -> subtest ("Named captures",
                                     \&named_captures,
-                                    %args,
-                                    got_captures => \%got_captures);
+                                    {%$args,
+                                     got_captures => \%got_captures});
 
         $pass &&= $Test -> subtest ("Positional captures",
                                     \&positional_captures,
-                                    %args,
-                                    got_captures => \@got_captures);
+                                    {%$args,
+                                     got_captures => \@got_captures});
 
         $pass;
     }
@@ -662,10 +662,10 @@ package Test::Regexp {
                                  : \&should_not_match;
 
                 if (@todo_encodings > 1) {
-                    $pass &&= $Test -> subtest ($test_name, $sub, %args);
+                    $pass &&= $Test -> subtest ($test_name, $sub, {%args});
                 }
                 else {
-                    $pass &&= &$sub (%args);
+                    $pass &&= &$sub ({%args});
                 }
             }
 
