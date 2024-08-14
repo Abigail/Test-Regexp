@@ -8,7 +8,6 @@ t/100-use.t
 t/101-import.t
 t/102-import.t
 t/110-no_captures.t
-t/110_pattern.t
 t/110-match.t
 t/120_keep_pattern.t
 t/130_comment.t
