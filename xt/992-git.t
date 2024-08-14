@@ -6,8 +6,8 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-unless ($ENV {AUTHOR_TESTING}) {
-    plan skip_all => "AUTHOR tests";
+unless ($ENV {RELEASE_TESTING}) {
+    plan skip_all => "RELEASE tests";
     exit;
 }
 
@@ -17,7 +17,7 @@ unless (-f ".git/config") {
 }
 
 undef $ENV {PATH};
-my ($GIT)  = grep {-x} qw [/opt/git/bin/git /opt/local/bin/git];
+my ($GIT)  = grep {-x} qw [/opt/git/bin/git /opt/local/bin/git /usr/bin/git];
 my ($HEAD) = grep {-x} qw [/usr/bin/head];
 
 my @output = `$GIT status --porcelain`;

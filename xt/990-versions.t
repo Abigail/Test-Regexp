@@ -6,8 +6,8 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-unless ($ENV {AUTHOR_TESTING}) {
-    plan skip_all => "AUTHOR tests";
+unless ($ENV {RELEASE_TESTING}) {
+    plan skip_all => "RELEASE tests";
     exit;
 }
 
