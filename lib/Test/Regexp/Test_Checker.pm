@@ -284,8 +284,8 @@ my sub check_positional ($output, $exp, $match) {
             my $name = $test_nr == 1 ? "Number of positional captures"
                                      : "Checking \$$i";
             my $exp_message = $test_nr == 1 ?
-                                  @exp == 1 ? "No positional captures"
-                                            : "Number of positional captures"
+                                 @$captures ? "Number of positional captures"
+                                            : "No positional captures"
                                             : "\$$i eq '$capture'";
 
             check_single_result output      => $output,
