@@ -9,6 +9,7 @@ t/101-import.t
 t/102-import.t
 t/110-no_captures.t
 t/110-match.t
+t/120-positional.t
 t/130_comment.t
 t/140_utf8.t
 t/150_reason.t
