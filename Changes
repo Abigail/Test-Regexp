@@ -1,5 +1,14 @@
 Version 2024080901
 + Significant rewrite.
+    o Tests are now run in (nested) subtests. Each call to 'match'/'no match'
+      will trigger a subtest. Inside this subtest we will have multiple
+      subtests: - Checking the match
+                - Checking the named captures
+                - Checking the positional captures.
+    o A completely new way of testing the module. Test::Tester doesn't
+      have support for testing subtests. So, we run 'match'/'no match'
+      in a child process, then check the output whether it is what
+      we expect.
     o The "keep_pattern" option has been dropped. This should not have been
       used outside of testing Regexp::Common anyway, and it's more
       annoying than useful.

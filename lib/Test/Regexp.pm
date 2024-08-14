@@ -327,7 +327,7 @@ package Test::Regexp {
 
         my $pass = 1;
       CAPTURE_NAME:
-        foreach my $name (keys %$got_captures) {
+        foreach my $name (sort {$a cmp $b} keys %$got_captures) {
             my $exp_capture_count = scalar @{$$exp_captures {$name} || []};
             unless ($Test -> is_eq (scalar @{$$got_captures {$name} || []},
                                     $exp_capture_count,
@@ -384,7 +384,9 @@ package Test::Regexp {
 
         return unless $Test -> is_eq (scalar @$got_captures,
                                       scalar @$exp_captures,
-                                      "Number of positional captures");
+                                      scalar @$exp_captures                 ?
+                                            "Number of positional captures" :
+                                            "No positional captures");
 
         my $pass = 1;
         for (my $i = 0; $i < @$exp_captures; $i ++) {
