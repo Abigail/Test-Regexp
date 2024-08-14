@@ -4,9 +4,9 @@ MANIFEST
 README
 TODO
 lib/Test/Regexp.pm
-t/100_use.t
-t/101_import.t
-t/102_import.t
+t/100-use.t
+t/101-import.t
+t/102-import.t
 t/110_pattern.t
 t/110-match.t
 t/120_keep_pattern.t

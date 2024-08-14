@@ -10,8 +10,8 @@ BEGIN {
 }
 
 
-ok defined &match;
-ok defined &no_match;
+ok  defined &match,    "match () has been exported ()";
+ok  defined &no_match, "no_match () has been exported ()";
 
 
 __END__
